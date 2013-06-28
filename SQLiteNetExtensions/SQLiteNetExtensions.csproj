@@ -37,6 +37,15 @@
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Attributes\ForeignKeyAttribute.cs" />
+    <Compile Include="Attributes\ManyToManyAttribute.cs" />
+    <Compile Include="Attributes\ManyToOneAttribute.cs" />
+    <Compile Include="Attributes\OnDeleteAction.cs" />
+    <Compile Include="Attributes\OneToManyAttribute.cs" />
+    <Compile Include="Attributes\OneToOneAttribute.cs" />
+    <Compile Include="Attributes\RelationshipAttribute.cs" />
+    <Compile Include="Attributes\ReversibleRelationshipAttribute.cs" />
+    <Compile Include="Extensions\PropertyExtensions.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
