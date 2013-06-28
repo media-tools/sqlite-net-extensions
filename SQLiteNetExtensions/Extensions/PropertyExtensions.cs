@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
@@ -17,13 +18,13 @@ namespace SQLiteNetExtensions.Extensions
 
     public static class PropertyExtensions
     {
-        public static RelationshipAttribute GetRelationShipAttribute(this PropertyInfo property)
+        public static T GetAttribute<T>(this PropertyInfo property) where T : Attribute
         {
-            RelationshipAttribute attribute = null;
-            var relationshipAttributes = (RelationshipAttribute[])property.GetCustomAttributes(typeof(RelationshipAttribute), true);
-            if (relationshipAttributes.Length > 0)
+            T attribute = null;
+            var attributes = (T[])property.GetCustomAttributes(typeof(T), true);
+            if (attributes.Length > 0)
             {
-                attribute = relationshipAttributes[0];
+                attribute = attributes[0];
             }
             return attribute;
         }
@@ -35,22 +36,37 @@ namespace SQLiteNetExtensions.Extensions
 
         public static PropertyInfo GetInversePropertyForRelationship(this PropertyInfo property, Type elementType)
         {
-            PropertyInfo result = null;
+
+            var attribute = property.GetAttribute<ReversibleRelationshipAttribute>();
+            if (attribute == null|| attribute.InverseProperty.Equals(""))
+            {
+                // Relationship not reversible
+                return null;
+            }
 
             EnclosedType enclosedType;
             var propertyType = property.GetEntityType(out enclosedType);
 
-            var properties = propertyType.GetProperties(BindingFlags.Instance | BindingFlags.Public);
-            foreach (var inverseProperty in properties)
+            PropertyInfo result = null;
+            if (attribute.InverseProperty != null)
             {
-                var attribute = inverseProperty.GetRelationShipAttribute();
-                EnclosedType enclosedInverseType;
-                var inverseType = inverseProperty.GetEntityType(out enclosedInverseType);
-                if (attribute != null && elementType.IsAssignableFrom(inverseType))
+                result = propertyType.GetProperty(attribute.InverseProperty);
+            }
+            else
+            {
+                var properties = propertyType.GetProperties(BindingFlags.Instance | BindingFlags.Public);
+                foreach (var inverseProperty in properties)
                 {
-                    result = inverseProperty;
+                    var inverseAttribute = inverseProperty.GetAttribute<ReversibleRelationshipAttribute>();
+                    EnclosedType enclosedInverseType;
+                    var inverseType = inverseProperty.GetEntityType(out enclosedInverseType);
+                    if (inverseAttribute != null && elementType.IsAssignableFrom(inverseType))
+                    {
+                        result = inverseProperty;
+                    }
                 }
             }
+
 
             return result;
         }

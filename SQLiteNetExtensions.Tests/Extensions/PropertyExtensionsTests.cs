@@ -33,7 +33,8 @@ namespace SQLiteNetExtensions.Tests.Extensions
 
     public class DummyClassC
     {
-        
+        [ManyToOne(inverseProperty: "")]
+        public List<DummyClassD> ManyToOneD { get; set; }
     }
 
     public class DummyClassD
@@ -55,14 +56,26 @@ namespace SQLiteNetExtensions.Tests.Extensions
             var typeA = typeof (DummyClassA);
             var typeB = typeof (DummyClassB);
 
-            var expectedTypeAOneB = typeA.GetProperty("OneB");
-            var expectedTypeBOneA = typeB.GetProperty("OneA");
+            var expectedAOneBProperty = typeA.GetProperty("OneB");
+            var expectedBOneAProperty = typeB.GetProperty("OneA");
 
-            var typeAOneB = expectedTypeBOneA.GetInversePropertyForRelationship(typeB);
-            var typeBOneA = expectedTypeAOneB.GetInversePropertyForRelationship(typeA);
+            var aOneBProperty = expectedBOneAProperty.GetInversePropertyForRelationship(typeB);
+            var bOneAProperty = expectedAOneBProperty.GetInversePropertyForRelationship(typeA);
 
-            Assert.AreEqual(expectedTypeAOneB, typeAOneB, "Type A -> Type B inverse relationship is not correct");
-            Assert.AreEqual(expectedTypeBOneA, typeBOneA, "Type B -> Type  inverse relationship is not correct");
+            Assert.AreEqual(expectedAOneBProperty, aOneBProperty, "Type A -> Type B inverse relationship is not correct");
+            Assert.AreEqual(expectedBOneAProperty, bOneAProperty, "Type B -> Type A inverse relationship is not correct");
+        }
+
+        [Test]
+        public void TestNoInverse()
+        {
+            var typeC = typeof(DummyClassC);
+
+            var cManyDProperty = typeC.GetProperty("ManyToOneD");
+
+            var inverseProperty = cManyDProperty.GetInversePropertyForRelationship(typeC);
+            Assert.IsNull(inverseProperty, "Declared empty Inverse Property should be null");
+
         }
 
         [Test]
@@ -72,7 +85,7 @@ namespace SQLiteNetExtensions.Tests.Extensions
             var property = typeA.GetProperty("OneB");
 
             var expectedAttributeType = typeof (OneToOneAttribute);
-            var attribute = property.GetRelationShipAttribute();
+            var attribute = property.GetAttribute<RelationshipAttribute>();
             var attributeType = attribute.GetType();
 
             Assert.AreEqual(expectedAttributeType, attributeType, "Relationship Attribute doesn't match expected type");
@@ -84,7 +97,7 @@ namespace SQLiteNetExtensions.Tests.Extensions
             var typeA = typeof(DummyClassA);
             var property = typeA.GetProperty("FooInt");
 
-            var attribute = property.GetRelationShipAttribute();
+            var attribute = property.GetAttribute<RelationshipAttribute>();
 
             Assert.IsNull(attribute);
         }
