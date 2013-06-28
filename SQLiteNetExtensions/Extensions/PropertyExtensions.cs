@@ -45,7 +45,8 @@ namespace SQLiteNetExtensions.Extensions
             {
                 var attribute = inverseProperty.GetRelationShipAttribute();
                 EnclosedType enclosedInverseType;
-                if (attribute != null && property.GetEntityType(out enclosedInverseType).IsInstanceOfType(elementType))
+                var inverseType = inverseProperty.GetEntityType(out enclosedInverseType);
+                if (attribute != null && elementType.IsAssignableFrom(inverseType))
                 {
                     result = inverseProperty;
                 }
@@ -64,7 +65,7 @@ namespace SQLiteNetExtensions.Extensions
                 type = type.GetElementType();
                 enclosedType = EnclosedType.Array;
             }
-            else if (typeof(List<>).IsAssignableFrom(type))
+            else if (type.IsGenericType && typeof(List<>).IsAssignableFrom(type.GetGenericTypeDefinition()))
             {
                 type = type.GetGenericArguments()[0];
                 enclosedType = EnclosedType.List;

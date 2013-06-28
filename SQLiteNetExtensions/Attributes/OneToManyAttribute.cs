@@ -1,8 +1,8 @@
 ﻿namespace SQLiteNetExtensions.Attributes
 {
-    public class OneToManyAttribute : ReversibleRelationshipAttribute
+    public class OneToMany : ReversibleRelationshipAttribute
     {
-        public OneToManyAttribute(string idProperty = null, string inverseProperty = null, OnDeleteAction onDeleteAction = OnDeleteAction.None)
+        public OneToMany(string idProperty = null, string inverseProperty = null, OnDeleteAction onDeleteAction = OnDeleteAction.None)
             : base(idProperty, inverseProperty, onDeleteAction)
         {
         }
