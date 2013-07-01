@@ -12,7 +12,9 @@ namespace SQLiteNetExtensions.Tests.Extensions
 {
     public class DummyClassA
     {
-        [OneToOne]
+        public int DummyBForeignKey { get; set; }
+
+        [OneToOne("DummyBForeignKey")]
         public DummyClassB OneB { get; set; }
 
         [OneToMany]
@@ -39,7 +41,8 @@ namespace SQLiteNetExtensions.Tests.Extensions
 
     public class DummyClassD
     {
-        
+        [ForeignKey(typeof(DummyClassC))]
+        public int ClassCKey { get; set; }
     }
 
     public class IntermediateDummyADummyD
@@ -59,8 +62,8 @@ namespace SQLiteNetExtensions.Tests.Extensions
             var expectedAOneBProperty = typeA.GetProperty("OneB");
             var expectedBOneAProperty = typeB.GetProperty("OneA");
 
-            var aOneBProperty = expectedBOneAProperty.GetInversePropertyForRelationship(typeB);
-            var bOneAProperty = expectedAOneBProperty.GetInversePropertyForRelationship(typeA);
+            var aOneBProperty = typeB.GetInversePropertyForRelationship(expectedBOneAProperty);
+            var bOneAProperty = typeA.GetInversePropertyForRelationship(expectedAOneBProperty);
 
             Assert.AreEqual(expectedAOneBProperty, aOneBProperty, "Type A -> Type B inverse relationship is not correct");
             Assert.AreEqual(expectedBOneAProperty, bOneAProperty, "Type B -> Type A inverse relationship is not correct");
@@ -73,7 +76,7 @@ namespace SQLiteNetExtensions.Tests.Extensions
 
             var cManyDProperty = typeC.GetProperty("ManyToOneD");
 
-            var inverseProperty = cManyDProperty.GetInversePropertyForRelationship(typeC);
+            var inverseProperty = typeC.GetInversePropertyForRelationship(cManyDProperty);
             Assert.IsNull(inverseProperty, "Declared empty Inverse Property should be null");
 
         }
@@ -145,6 +148,53 @@ namespace SQLiteNetExtensions.Tests.Extensions
 
             Assert.AreEqual(expectedType, entityType);
             Assert.AreEqual(expectedContainerType, enclosedType);
+        }
+
+        [Test]
+        public void TestForeignKeyExplicitAttribute()
+        {
+            var typeC = typeof(DummyClassC);
+            var typeD = typeof(DummyClassD);
+
+            var property = typeC.GetProperty("ManyToOneD");
+            var expectedForeignKeyProperty = typeD.GetProperty("ClassCKey");
+
+            var foreignKeyProperty = typeC.GetForeignKeyPropertyForRelationship(property, inverse:true);
+
+            Assert.AreEqual(expectedForeignKeyProperty, foreignKeyProperty);
+        }
+
+        [Test]
+        public void TestForeignKeyExplicitName()
+        {
+            var typeA = typeof(DummyClassA);
+            var property = typeA.GetProperty("OneB");
+            var expectedForeignKeyProperty = typeA.GetProperty("DummyBForeignKey");
+
+            var foreignKeyProperty = typeA.GetForeignKeyPropertyForRelationship(property);
+
+            Assert.AreEqual(expectedForeignKeyProperty, foreignKeyProperty);
+        }
+
+        [Test]
+        [Ignore]
+        public void TestForeignKeyConventionName()
+        {
+            Assert.Fail("Test not implemented yet");
+        }
+
+        [Test]
+        [Ignore]
+        public void TestForeignKeyUndefined()
+        {
+            Assert.Fail("Test not implemented yet");
+        }
+
+        [Test]
+        [Ignore]
+        public void TestManyToManyMetaInfo()
+        {
+            Assert.Fail("Test not implemented yet");
         }
     }
 }

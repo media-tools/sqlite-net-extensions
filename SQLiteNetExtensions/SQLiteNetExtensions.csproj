@@ -44,7 +44,6 @@
     <Compile Include="Attributes\OneToManyAttribute.cs" />
     <Compile Include="Attributes\OneToOneAttribute.cs" />
     <Compile Include="Attributes\RelationshipAttribute.cs" />
-    <Compile Include="Attributes\ReversibleRelationshipAttribute.cs" />
     <Compile Include="Extensions\PropertyExtensions.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

@@ -1,9 +1,9 @@
 ﻿namespace SQLiteNetExtensions.Attributes
 {
-    public class ManyToOneAttribute : ReversibleRelationshipAttribute
+    public class ManyToOneAttribute : RelationshipAttribute
     {
-        public ManyToOneAttribute(string idProperty = null, string inverseProperty = null, OnDeleteAction onDeleteAction = OnDeleteAction.None)
-            : base(idProperty, inverseProperty, onDeleteAction)
+        public ManyToOneAttribute(string foreignKey = null, string inverseProperty = null, OnDeleteAction onDeleteAction = OnDeleteAction.None)
+            : base(foreignKey, inverseProperty, onDeleteAction)
         {
         }
 
