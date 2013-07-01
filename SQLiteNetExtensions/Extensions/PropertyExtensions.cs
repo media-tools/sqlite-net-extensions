@@ -58,7 +58,7 @@ namespace SQLiteNetExtensions.Extensions
                         .FirstOrDefault();
         }
 
-        public static PropertyInfo GetForeignKeyPropertyForRelationship(this Type type,
+        public static PropertyInfo GetForeignKeyProperty(this Type type,
                                                                          PropertyInfo relationshipProperty, Type intermediateType = null, bool inverse = false)
         {
             PropertyInfo result;
@@ -86,7 +86,7 @@ namespace SQLiteNetExtensions.Extensions
         }
 
 
-        public static PropertyInfo GetInversePropertyForRelationship(this Type elementType, PropertyInfo property)
+        public static PropertyInfo GetInverseProperty(this Type elementType, PropertyInfo property)
         {
 
             var attribute = property.GetAttribute<RelationshipAttribute>();
@@ -124,12 +124,12 @@ namespace SQLiteNetExtensions.Extensions
         }
 
 
-        public static ManyToManyMetaInfo GetManyToManyMetaInfoForRelationship(this Type type, PropertyInfo relationship)
+        public static ManyToManyMetaInfo GetManyToManyMetaInfo(this Type type, PropertyInfo relationship)
         {
             var manyToManyAttribute = relationship.GetAttribute<ManyToManyAttribute>();
             Debug.Assert(manyToManyAttribute != null, "Unable to find ManyToMany attribute");
 
-            var inverseProperty = type.GetInversePropertyForRelationship(relationship);
+            var inverseProperty = type.GetInverseProperty(relationship);
             Debug.Assert(inverseProperty != null, "Inverse relationship is required");
 
             EnclosedType inverseEnclosedType;
@@ -142,13 +142,13 @@ namespace SQLiteNetExtensions.Extensions
             var intermediateType = manyToManyAttribute.IntermediateTable;
             Debug.Assert(intermediateType != null, "Intermediate table cannot be null");
 
-            var originKeyProperty = type.GetForeignKeyPropertyForRelationship(relationship, intermediateType, false);
-            var inverseKeyProperty = type.GetForeignKeyPropertyForRelationship(relationship, intermediateType, true);
+            var originKeyProperty = type.GetForeignKeyProperty(relationship, intermediateType);
+            var inverseKeyProperty = type.GetForeignKeyProperty(relationship, intermediateType, true);
 
             Debug.Assert(originKeyProperty != null, "Unable to find Foreign key in intermediate type");
             Debug.Assert(originKeyProperty != null, "Unable to find inverse Foreign key in intermediate table");
 
-            return new ManyToManyMetaInfo()
+            return new ManyToManyMetaInfo
                 {
                     IntermediateTable = intermediateType,
                     OriginProperty = originKeyProperty,
