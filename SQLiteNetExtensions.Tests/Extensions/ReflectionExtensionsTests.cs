@@ -55,7 +55,7 @@ namespace SQLiteNetExtensions.Tests.Extensions
     }
 
     [TestFixture]
-    public class PropertyExtensionsTests
+    public class ReflectionExtensionsTests
     {
         [Test]
         public void TestOneToOneInverse()

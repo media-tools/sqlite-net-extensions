@@ -34,6 +34,24 @@ namespace SQLiteNetExtensions.Extensions
             return attribute;
         }
 
+        public static Type GetEntityType(this PropertyInfo property, out EnclosedType enclosedType)
+        {
+            var type = property.PropertyType;
+            enclosedType = EnclosedType.None;
+
+            if (type.IsArray)
+            {
+                type = type.GetElementType();
+                enclosedType = EnclosedType.Array;
+            }
+            else if (type.IsGenericType && typeof(List<>).IsAssignableFrom(type.GetGenericTypeDefinition()))
+            {
+                type = type.GetGenericArguments()[0];
+                enclosedType = EnclosedType.List;
+            }
+            return type;
+        }
+
         private static PropertyInfo GetExplicitForeignKeyProperty(this Type type, Type destinationType)
         {
             return (from property in type.GetProperties(BindingFlags.Public | BindingFlags.Instance)
@@ -153,23 +171,13 @@ namespace SQLiteNetExtensions.Extensions
                 };
         }
 
-        public static Type GetEntityType(this PropertyInfo property, out EnclosedType enclosedType)
+        public static List<PropertyInfo> GetRelationshipProperties(this Type type)
         {
-            var type = property.PropertyType;
-            enclosedType = EnclosedType.None;
-
-            if (type.IsArray)
-            {
-                type = type.GetElementType();
-                enclosedType = EnclosedType.Array;
-            }
-            else if (type.IsGenericType && typeof(List<>).IsAssignableFrom(type.GetGenericTypeDefinition()))
-            {
-                type = type.GetGenericArguments()[0];
-                enclosedType = EnclosedType.List;
-            }
-            return type;
-        }
+            return (from property in type.GetProperties(BindingFlags.Public | BindingFlags.Instance)
+                    where property.GetAttribute<RelationshipAttribute>() != null
+                    select property).ToList();
+        } 
+        
     }
 
     

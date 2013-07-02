@@ -52,7 +52,7 @@
     <Otherwise />
   </Choose>
   <ItemGroup>
-    <Compile Include="Extensions\PropertyExtensionsTests.cs" />
+    <Compile Include="Extensions\ReflectionExtensionsTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>

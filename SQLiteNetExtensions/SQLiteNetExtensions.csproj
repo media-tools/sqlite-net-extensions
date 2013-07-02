@@ -44,6 +44,7 @@
     <Compile Include="Attributes\OneToManyAttribute.cs" />
     <Compile Include="Attributes\OneToOneAttribute.cs" />
     <Compile Include="Attributes\RelationshipAttribute.cs" />
+    <Compile Include="Extensions\SQLiteExtension.cs" />
     <Compile Include="Extensions\ReflectionExtensions.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
