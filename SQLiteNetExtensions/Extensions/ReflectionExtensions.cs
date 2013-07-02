@@ -21,7 +21,7 @@ namespace SQLiteNetExtensions.Extensions
         public PropertyInfo DestinationProperty { get; set; }
     }
 
-    public static class PropertyExtensions
+    public static class ReflectionExtensions
     {
         public static T GetAttribute<T>(this PropertyInfo property) where T : Attribute
         {
