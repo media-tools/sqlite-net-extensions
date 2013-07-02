@@ -26,23 +26,32 @@ namespace SQLiteNetExtensions.Tests.Extensions
     {
         [OneToOne]
         public DummyClassA OneA { get; set; }
+
+        [OneToOne]
+        public DummyClassC ObjectC { get; set; }
+        public int DummyClassCKey { get; set; }
     }
 
     public class DummyClassC
     {
         [ManyToOne(inverseProperty: "")]
-        public List<DummyClassD> ManyToOneD { get; set; }
+        public DummyClassD ManyToOneD { get; set; }
     }
 
     public class DummyClassD
     {
         [ForeignKey(typeof(DummyClassC))]
         public int ClassCKey { get; set; }
+
+        [ManyToMany(typeof(IntermediateDummyADummyD))]
+        public List<DummyClassA> ManyA { get; set; }
     }
 
     public class IntermediateDummyADummyD
     {
-        
+        public int DummyClassAForeignKey { get; set; } // Convention name
+        [ForeignKey(typeof(DummyClassD))]
+        public int ClassDKey { get; set; } // Explicitly declared foreign key
     }
 
     [TestFixture]
@@ -172,24 +181,43 @@ namespace SQLiteNetExtensions.Tests.Extensions
         }
 
         [Test]
-        [Ignore]
         public void TestForeignKeyConventionName()
         {
-            Assert.Fail("Test not implemented yet");
+            var typeB = typeof (DummyClassB);
+            var property = typeB.GetProperty("ObjectC");
+            var expectedForeignKeyProperty = typeB.GetProperty("DummyClassCKey");
+
+            var foreignKeyProperty = typeB.GetForeignKeyProperty(property);
+
+            Assert.AreEqual(expectedForeignKeyProperty, foreignKeyProperty);
         }
 
         [Test]
-        [Ignore]
         public void TestForeignKeyUndefined()
         {
-            Assert.Fail("Test not implemented yet");
+            var typeC = typeof(DummyClassC);
+            var property = typeC.GetProperty("ManyToOneD");
+
+            var foreignKeyProperty = typeC.GetForeignKeyProperty(property);
+
+            Assert.IsNull(foreignKeyProperty);
         }
 
         [Test]
-        [Ignore]
         public void TestManyToManyMetaInfo()
         {
-            Assert.Fail("Test not implemented yet");
+            var typeA = typeof (DummyClassA);
+            var intermediateType = typeof (IntermediateDummyADummyD);
+
+            var manyAToManyDProperty = typeA.GetProperty("ManyToManyD");
+            var expectedTypeAForeignKeyProperty = intermediateType.GetProperty("DummyClassAForeignKey");
+            var expectedTypeDForeignKeyProperty = intermediateType.GetProperty("ClassDKey");
+
+            var metaInfo = typeA.GetManyToManyMetaInfo(manyAToManyDProperty);
+
+            Assert.AreEqual(metaInfo.IntermediateTable, intermediateType);
+            Assert.AreEqual(expectedTypeAForeignKeyProperty, metaInfo.OriginProperty);
+            Assert.AreEqual(expectedTypeDForeignKeyProperty, metaInfo.DestinationProperty);
         }
     }
 }

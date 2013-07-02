@@ -2,9 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using System.Linq.Expressions;
 using System.Reflection;
-using System.Text;
 using SQLiteNetExtensions.Attributes;
 
 namespace SQLiteNetExtensions.Extensions
@@ -58,8 +56,7 @@ namespace SQLiteNetExtensions.Extensions
                         .FirstOrDefault();
         }
 
-        public static PropertyInfo GetForeignKeyProperty(this Type type,
-                                                                         PropertyInfo relationshipProperty, Type intermediateType = null, bool inverse = false)
+        public static PropertyInfo GetForeignKeyProperty(this Type type, PropertyInfo relationshipProperty, Type intermediateType = null, bool inverse = false)
         {
             PropertyInfo result;
             var attribute = relationshipProperty.GetAttribute<RelationshipAttribute>();
@@ -142,17 +139,17 @@ namespace SQLiteNetExtensions.Extensions
             var intermediateType = manyToManyAttribute.IntermediateTable;
             Debug.Assert(intermediateType != null, "Intermediate table cannot be null");
 
-            var originKeyProperty = type.GetForeignKeyProperty(relationship, intermediateType);
+            var destinationKeyProperty = type.GetForeignKeyProperty(relationship, intermediateType);
             var inverseKeyProperty = type.GetForeignKeyProperty(relationship, intermediateType, true);
 
-            Debug.Assert(originKeyProperty != null, "Unable to find Foreign key in intermediate type");
-            Debug.Assert(originKeyProperty != null, "Unable to find inverse Foreign key in intermediate table");
+            Debug.Assert(destinationKeyProperty != null, "Unable to find Foreign key in intermediate type");
+            Debug.Assert(destinationKeyProperty != null, "Unable to find inverse Foreign key in intermediate table");
 
             return new ManyToManyMetaInfo
                 {
                     IntermediateTable = intermediateType,
-                    OriginProperty = originKeyProperty,
-                    DestinationProperty = inverseKeyProperty
+                    OriginProperty = inverseKeyProperty,
+                    DestinationProperty = destinationKeyProperty
                 };
         }
 
