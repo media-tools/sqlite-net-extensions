@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics;
+using System.Linq;
 using System.Reflection;
 using SQLiteNetExtensions.Attributes;
 
@@ -95,7 +96,7 @@ namespace SQLiteNetExtensions.Extensions
                 if (primaryKeyValue != null)
                 {
                     var query = string.Format("select * from {0} where {1} = ?", entityType.Name, otherEntityForeignKeyProperty.Name);
-                    value = conn.Query(tableMapping, query, primaryKeyValue);
+                    value = conn.Query(tableMapping, query, primaryKeyValue).FirstOrDefault(); // Its a OneToOne, take only the first
                 }
             }
 
