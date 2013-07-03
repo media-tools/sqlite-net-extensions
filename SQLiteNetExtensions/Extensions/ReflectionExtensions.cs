@@ -5,6 +5,12 @@ using System.Linq;
 using System.Reflection;
 using SQLiteNetExtensions.Attributes;
 
+#if USING_MVVMCROSS
+using Cirrious.MvvmCross.Plugins.Sqlite;
+#else
+using SQLite;
+#endif
+
 namespace SQLiteNetExtensions.Extensions
 {
     public enum EnclosedType
