@@ -33,7 +33,7 @@ namespace SQLiteNetExtensions.IntegrationTests
         [PrimaryKey, AutoIncrement]
         public int ClassId { get; set; }
 
-        [OneToOne]                          // Foreign key can be declared in the other class
+        [OneToOne]     // OneToOne Foreign key can be declared in the referenced class
         public O2OClassD ElementD { get; set; }
 
         public string Bar { get; set; }
