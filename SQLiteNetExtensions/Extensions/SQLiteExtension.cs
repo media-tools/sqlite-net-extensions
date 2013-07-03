@@ -1,4 +1,5 @@
-﻿using System.Diagnostics;
+﻿using System.Collections;
+using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
 using SQLiteNetExtensions.Attributes;
@@ -43,7 +44,7 @@ namespace SQLiteNetExtensions.Extensions
             }
             else if (relationshipAttribute is OneToManyAttribute)
             {
-                // TODO
+                conn.GetOneToManyChildren(ref element, relationshipProperty);
             }
             else if (relationshipAttribute is ManyToOneAttribute)
             {
@@ -136,6 +137,54 @@ namespace SQLiteNetExtensions.Extensions
 
             relationshipProperty.SetValue(element, value, null);
 
+        }
+
+        private static void GetOneToManyChildren<T>(this SQLiteConnection conn, ref T element,
+                                                PropertyInfo relationshipProperty)
+        {
+            var type = typeof(T);
+            EnclosedType enclosedType;
+            var entityType = relationshipProperty.GetEntityType(out enclosedType);
+
+            Debug.Assert(enclosedType != EnclosedType.None, "OneToMany relationship must be a List or Array");
+
+            var currentEntityPrimaryKeyProperty = type.GetPrimaryKey();
+            Debug.Assert(currentEntityPrimaryKeyProperty != null, "OneToMany relationship origin must have Primary Key");
+
+            var otherEntityForeignKeyProperty = type.GetForeignKeyProperty(relationshipProperty, inverse: true);
+            Debug.Assert(otherEntityForeignKeyProperty != null, "OneToMany relationship destination must have Foreign Key to the origin class");
+
+            var tableMapping = conn.GetMapping(entityType);
+            Debug.Assert(tableMapping != null, "There's no mapping table for OneToMany relationship destination");
+
+            var inverseProperty = type.GetInverseProperty(relationshipProperty);
+
+            IEnumerable values = null;
+            var primaryKeyValue = currentEntityPrimaryKeyProperty.GetValue(element, null);
+            if (primaryKeyValue != null)
+            {
+                var query = string.Format("select * from {0} where {1} = ?", entityType.Name, otherEntityForeignKeyProperty.Name);
+                var queryResults = conn.Query(tableMapping, query, primaryKeyValue);
+                if (enclosedType == EnclosedType.List)
+                {
+                    values = queryResults.ToList();
+                }
+                else
+                {
+                    values = queryResults.ToArray();
+                }
+            }
+
+            relationshipProperty.SetValue(element, values, null);
+
+            if (inverseProperty != null && values != null)
+            {
+                // Stablish inverse relationships (we already have that object anyway)
+                foreach (var value in values)
+                {
+                    inverseProperty.SetValue(value, element, null);
+                }
+            }
         }
     } 
 
