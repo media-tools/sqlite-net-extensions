@@ -53,6 +53,7 @@
   </Choose>
   <ItemGroup>
     <Compile Include="Extensions\ReflectionExtensionsTests.cs" />
+    <Compile Include="Extensions\SQLiteExtensionTest.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>

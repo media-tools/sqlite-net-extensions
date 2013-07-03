@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
+using Cirrious.MvvmCross.Plugins.Sqlite;
 using SQLiteNetExtensions.Attributes;
 
 namespace SQLiteNetExtensions.Extensions
@@ -176,6 +177,13 @@ namespace SQLiteNetExtensions.Extensions
             return (from property in type.GetProperties(BindingFlags.Public | BindingFlags.Instance)
                     where property.GetAttribute<RelationshipAttribute>() != null
                     select property).ToList();
+        } 
+
+        public static PropertyInfo GetPrimaryKey(this Type type)
+        {
+            return (from propety in type.GetProperties(BindingFlags.Public | BindingFlags.Instance)
+                    where propety.GetAttribute<PrimaryKeyAttribute>() != null
+                    select propety).FirstOrDefault();
         } 
         
     }
