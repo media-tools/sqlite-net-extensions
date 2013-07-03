@@ -1,5 +1,9 @@
 ﻿using System;
-using Cirrious.MvvmCross.Plugins.Sqlite;
+#if USING_MVVMCROSS
+using IgnoreAttribute = Cirrious.MvvmCross.Plugins.Sqlite.IgnoreAttribute;
+#else
+using SQLite;
+#endif
 
 namespace SQLiteNetExtensions.Attributes
 {

@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
-using Cirrious.MvvmCross.Plugins.Sqlite;
 using SQLiteNetExtensions.Attributes;
 
 namespace SQLiteNetExtensions.Extensions
