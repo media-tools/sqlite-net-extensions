@@ -43,15 +43,15 @@ namespace SQLiteNetExtensions.Extensions
             }
             else if (relationshipAttribute is OneToManyAttribute)
             {
-                
+                // TODO
             }
             else if (relationshipAttribute is ManyToOneAttribute)
             {
-                
+                conn.GetManyToOneChild(ref element, relationshipProperty);
             }
             else if (relationshipAttribute is ManyToManyAttribute)
             {
-                
+                // TODO
             }
         }
 
@@ -106,6 +106,36 @@ namespace SQLiteNetExtensions.Extensions
             {
                 inverseProperty.SetValue(value, element, null);
             }
+        }
+
+
+        private static void GetManyToOneChild<T>(this SQLiteConnection conn, ref T element,
+                                                 PropertyInfo relationshipProperty)
+        {
+            var type = typeof(T);
+            EnclosedType enclosedType;
+            var entityType = relationshipProperty.GetEntityType(out enclosedType);
+
+            Debug.Assert(enclosedType == EnclosedType.None, "ManyToOne relationship cannot be of type List or Array");
+
+            var otherEntityPrimaryKeyProperty = entityType.GetPrimaryKey();
+            Debug.Assert(otherEntityPrimaryKeyProperty != null, "ManyToOne relationship destination must have Primary Key");
+
+            var currentEntityForeignKeyProperty = type.GetForeignKeyProperty(relationshipProperty);
+            Debug.Assert(currentEntityForeignKeyProperty != null, "ManyToOne relationship origin must have Foreign Key");
+
+            var tableMapping = conn.GetMapping(entityType);
+            Debug.Assert(tableMapping != null, "There's no mapping table for OneToMany relationship destination");
+
+            object value = null;
+            var foreignKeyValue = currentEntityForeignKeyProperty.GetValue(element, null);
+            if (foreignKeyValue != null)
+            {
+                value = conn.Find(foreignKeyValue, tableMapping);
+            }
+
+            relationshipProperty.SetValue(element, value, null);
+
         }
     } 
 
