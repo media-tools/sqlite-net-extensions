@@ -1,6 +1,11 @@
-﻿using Cirrious.MvvmCross.Plugins.Sqlite;
-using NUnit.Framework;
+﻿using NUnit.Framework;
 using SQLiteNetExtensions.Attributes;
+
+#if USING_MVVMCROSS
+using Cirrious.MvvmCross.Plugins.Sqlite;
+#else
+using SQLite;
+#endif
 
 namespace SQLiteNetExtensions.Tests.Extensions
 {
@@ -15,23 +20,19 @@ namespace SQLiteNetExtensions.Tests.Extensions
 
     public class ClassB
     {
+        [PrimaryKey, AutoIncrement]
+        public int Id { get; set; }
     }
 
     [TestFixture]
     public class SQLiteExtensionTest
     {
-        private ISQLiteConnection _connection;
-
-        [SetUp]
-        public void PrepareDatabase()
-        {
-        }
-
 
         [Test]
         public void TestGetOneToOne()
         {
 
+            
         }
     }
 }

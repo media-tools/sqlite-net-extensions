@@ -1,4 +1,6 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
+using System.Reflection;
 using NUnit.Framework;
 using SQLiteNetExtensions.Attributes;
 using SQLiteNetExtensions.Extensions;
@@ -54,9 +56,21 @@ namespace SQLiteNetExtensions.Tests.Extensions
         public int ClassDKey { get; set; } // Explicitly declared foreign key
     }
 
+
+#if NETFX_CORE // Workaround for .Net for Windows Store not having Type.GetProperty method
+    public static class GetPropertyHelper
+    {
+        public static PropertyInfo GetProperty(this Type type, string propertyName)
+        {
+            return type.GetTypeInfo().GetDeclaredProperty(propertyName);
+        }
+    }
+#endif
+
     [TestFixture]
     public class ReflectionExtensionsTests
     {
+
         [Test]
         public void TestOneToOneInverse()
         {
