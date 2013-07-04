@@ -93,7 +93,7 @@ namespace SQLiteNetExtensions.Extensions
             
             if (!string.IsNullOrEmpty(attribute.ForeignKey))
             {
-                // Explicitly declared foreing key name
+                // Explicitly declared foreign key name
                 result = originType.GetProperty(attribute.ForeignKey);
             }
             else
