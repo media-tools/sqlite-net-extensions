@@ -150,7 +150,7 @@ namespace SQLiteNetExtensions.Extensions
             var manyToManyAttribute = relationship.GetAttribute<ManyToManyAttribute>();
             Debug.Assert(manyToManyAttribute != null, "Unable to find ManyToMany attribute");
 
-            var intermediateType = manyToManyAttribute.IntermediateTable;
+            var intermediateType = manyToManyAttribute.IntermediateType;
             var destinationKeyProperty = type.GetForeignKeyProperty(relationship, intermediateType);
             var inverseKeyProperty = type.GetForeignKeyProperty(relationship, intermediateType, true);
 
