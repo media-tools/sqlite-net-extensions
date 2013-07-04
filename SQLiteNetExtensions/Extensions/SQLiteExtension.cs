@@ -54,7 +54,7 @@ namespace SQLiteNetExtensions.Extensions
             }
             else if (relationshipAttribute is ManyToManyAttribute)
             {
-                // TODO
+                conn.GetManyToManyChildren(ref element, relationshipProperty);
             }
         }
 
@@ -180,7 +180,7 @@ namespace SQLiteNetExtensions.Extensions
                 else
                 {
                     // Create a generic list of the expected type
-                    var array = Array.CreateInstance(entityType, new[]{queryResults.Count});
+                    var array = Array.CreateInstance(entityType, queryResults.Count);
                     for (var i = 0; i < queryResults.Count; i++)
                     {
                         array.SetValue(queryResults[i], i);
@@ -199,6 +199,73 @@ namespace SQLiteNetExtensions.Extensions
                     inverseProperty.SetValue(value, element, null);
                 }
             }
+        }
+
+        private static void GetManyToManyChildren<T>(this SQLiteConnection conn, ref T element,
+                                                PropertyInfo relationshipProperty)
+        {
+            var type = typeof(T);
+            EnclosedType enclosedType;
+            var entityType = relationshipProperty.GetEntityType(out enclosedType);
+
+            Debug.Assert(enclosedType != EnclosedType.None, "ManyToMany relationship must be a List or Array");
+
+            var currentEntityPrimaryKeyProperty = type.GetPrimaryKey();
+            var otherEntityPrimaryKeyProperty = entityType.GetPrimaryKey();
+            Debug.Assert(currentEntityPrimaryKeyProperty != null, "ManyToMany relationship origin must have Primary Key");
+            Debug.Assert(otherEntityPrimaryKeyProperty != null, "ManyToMany relationship destination must have Primary Key");
+
+            var manyToManyMetaInfo = type.GetManyToManyMetaInfo(relationshipProperty);
+            var currentEntityForeignKeyProperty = manyToManyMetaInfo.OriginProperty;
+            var otherEntityForeignKeyProperty = manyToManyMetaInfo.DestinationProperty;
+            var intermediateType = manyToManyMetaInfo.IntermediateType;
+            Debug.Assert(intermediateType != null, "ManyToMany relationship intermediate type cannot be null");
+            Debug.Assert(currentEntityForeignKeyProperty != null, "ManyToMany relationship origin must have a foreign key defined in the intermediate type");
+            Debug.Assert(otherEntityForeignKeyProperty != null, "ManyToMany relationship destination must have a foreign key defined in the intermediate type");
+
+            var tableMapping = conn.GetMapping(entityType);
+            Debug.Assert(tableMapping != null, "There's no mapping table defined for ManyToMany relationship origin");
+
+            var intermediateTableMapping = conn.GetMapping(intermediateType);
+            Debug.Assert(tableMapping != null, "There's no mapping table defined for ManyToMany relationship intermediate type");
+
+            IEnumerable values = null;
+            var primaryKeyValue = currentEntityPrimaryKeyProperty.GetValue(element, null);
+            if (primaryKeyValue != null)
+            {
+                // Obtain the relationship keys
+                var keysQuery = string.Format("select {0} from {1} where {2} = ?", otherEntityForeignKeyProperty.Name,
+                                              intermediateType.Name, currentEntityForeignKeyProperty.Name);
+
+                var query = string.Format("select * from {0} where {1} in ({2})", entityType.Name,
+                                          otherEntityPrimaryKeyProperty.Name, keysQuery);
+
+                var queryResults = conn.Query(tableMapping, query, primaryKeyValue);
+
+                if (enclosedType == EnclosedType.List)
+                {
+                    // Create a generic list of the expected type
+                    var list = (IList)Activator.CreateInstance(typeof(List<>).MakeGenericType(entityType));
+                    foreach (var result in queryResults)
+                    {
+                        list.Add(result);
+                    }
+                    values = list;
+                }
+                else
+                {
+                    // Create a generic list of the expected type
+                    var array = Array.CreateInstance(entityType, queryResults.Count);
+                    for (var i = 0; i < queryResults.Count; i++)
+                    {
+                        array.SetValue(queryResults[i], i);
+                    }
+                    values = array;
+                }
+            }
+
+            relationshipProperty.SetValue(element, values, null);
+
         }
     } 
 

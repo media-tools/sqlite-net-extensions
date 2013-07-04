@@ -229,7 +229,7 @@ namespace SQLiteNetExtensions.Tests.Extensions
 
             var metaInfo = typeA.GetManyToManyMetaInfo(manyAToManyDProperty);
 
-            Assert.AreEqual(metaInfo.IntermediateTable, intermediateType);
+            Assert.AreEqual(metaInfo.IntermediateType, intermediateType);
             Assert.AreEqual(expectedTypeAForeignKeyProperty, metaInfo.OriginProperty);
             Assert.AreEqual(expectedTypeDForeignKeyProperty, metaInfo.DestinationProperty);
         }

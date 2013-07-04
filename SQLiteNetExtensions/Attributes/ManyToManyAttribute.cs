@@ -4,12 +4,12 @@ namespace SQLiteNetExtensions.Attributes
 {
     public class ManyToManyAttribute : RelationshipAttribute
     {
-        public ManyToManyAttribute(Type intermediateTable, string foreignKey = null, string inverseProperty = null, OnDeleteAction onDeleteAction = OnDeleteAction.None)
+        public ManyToManyAttribute(Type intermediateType, string foreignKey = null, string inverseProperty = null, OnDeleteAction onDeleteAction = OnDeleteAction.None)
             : base(foreignKey, inverseProperty, onDeleteAction)
         {
-            IntermediateTable = intermediateTable;
+            IntermediateType = intermediateType;
         }
 
-        public Type IntermediateTable { get; private set; }
+        public Type IntermediateType { get; private set; }
     }
 }

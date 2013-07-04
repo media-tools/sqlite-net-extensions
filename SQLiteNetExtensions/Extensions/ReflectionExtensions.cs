@@ -22,7 +22,7 @@ namespace SQLiteNetExtensions.Extensions
 
     public class ManyToManyMetaInfo
     {
-        public Type IntermediateTable { get; set; }
+        public Type IntermediateType { get; set; }
         public PropertyInfo OriginProperty { get; set; }
         public PropertyInfo DestinationProperty { get; set; }
     }
@@ -150,28 +150,13 @@ namespace SQLiteNetExtensions.Extensions
             var manyToManyAttribute = relationship.GetAttribute<ManyToManyAttribute>();
             Debug.Assert(manyToManyAttribute != null, "Unable to find ManyToMany attribute");
 
-            var inverseProperty = type.GetInverseProperty(relationship);
-            Debug.Assert(inverseProperty != null, "Inverse relationship is required");
-
-            EnclosedType inverseEnclosedType;
-            var inverseManyToManyAttrute = inverseProperty.GetAttribute<ManyToManyAttribute>();
-            Debug.Assert(inverseManyToManyAttrute != null, "Unable to find ManyToMany attribute");
-            Debug.Assert(type == inverseProperty.GetEntityType(out inverseEnclosedType), "Inverse relationship type doesn't match");
-            Debug.Assert(inverseEnclosedType != EnclosedType.None, "N:M relationship must be an Array or List type");
-            Debug.Assert(inverseManyToManyAttrute.IntermediateTable == manyToManyAttribute.IntermediateTable, "Inverse intermediate type doesn't match");
-           
             var intermediateType = manyToManyAttribute.IntermediateTable;
-            Debug.Assert(intermediateType != null, "Intermediate table cannot be null");
-
             var destinationKeyProperty = type.GetForeignKeyProperty(relationship, intermediateType);
             var inverseKeyProperty = type.GetForeignKeyProperty(relationship, intermediateType, true);
 
-            Debug.Assert(destinationKeyProperty != null, "Unable to find Foreign key in intermediate type");
-            Debug.Assert(destinationKeyProperty != null, "Unable to find inverse Foreign key in intermediate table");
-
             return new ManyToManyMetaInfo
                 {
-                    IntermediateTable = intermediateType,
+                    IntermediateType = intermediateType,
                     OriginProperty = inverseKeyProperty,
                     DestinationProperty = destinationKeyProperty
                 };
