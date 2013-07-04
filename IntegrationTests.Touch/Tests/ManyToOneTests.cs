@@ -11,26 +11,26 @@ using Cirrious.MvvmCross.Plugins.Sqlite;
 
 namespace SQLiteNetExtensions.IntegrationTests
 {
-    public class M2OClassA
-    {
-        [ForeignKey(typeof(M2OClassB))]
-        public int OneClassBKey { get; set; }
-
-        [ManyToOne]
-        public M2OClassB OneClassB { get; set; }
-    }
-
-    public class M2OClassB
-    {
-        [PrimaryKey, AutoIncrement]
-        public int Id { get; set; }
-
-        public string Foo { get; set; }
-    }
-
+    
     [TestFixture]
     public class ManyToOneTests
     {
+        public class M2OClassA
+        {
+            [ForeignKey(typeof(M2OClassB))]
+            public int OneClassBKey { get; set; }
+
+            [ManyToOne]
+            public M2OClassB OneClassB { get; set; }
+        }
+
+        public class M2OClassB
+        {
+            [PrimaryKey, AutoIncrement]
+            public int Id { get; set; }
+
+            public string Foo { get; set; }
+        }
 
         [Test]
         public void TestGetManyToOne()

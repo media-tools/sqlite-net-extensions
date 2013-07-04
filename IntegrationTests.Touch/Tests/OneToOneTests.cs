@@ -11,66 +11,68 @@ using Cirrious.MvvmCross.Plugins.Sqlite;
 
 namespace SQLiteNetExtensions.IntegrationTests
 {
-    public class O2OClassA
-    {
-        [ForeignKey(typeof(O2OClassB))]     // Explicit foreign key attribute
-        public int OneClassBKey { get; set; }
-
-        [OneToOne]
-        public O2OClassB OneClassB { get; set; }
-    }
-
-    public class O2OClassB
-    {
-        [PrimaryKey, AutoIncrement]
-        public int Id { get; set; }
-
-        public string Foo { get; set; }
-    }
-
-    public class O2OClassC
-    {
-        [PrimaryKey, AutoIncrement]
-        public int ClassId { get; set; }
-
-        [OneToOne]     // OneToOne Foreign key can be declared in the referenced class
-        public O2OClassD ElementD { get; set; }
-
-        public string Bar { get; set; }
-    }
-
-    public class O2OClassD
-    {
-        [ForeignKey(typeof (O2OClassC))]    // Explicit foreign key attribute for a inverse relationship
-        public int ObjectCKey { get; set; }
-
-        public string Foo { get; set; }
-    }
-
-    public class O2OClassE
-    {
-        public int ObjectFKey { get; set; }
-
-        [OneToOne("ObjectFKey")]        // Explicit foreign key declaration
-        public O2OClassF ObjectF { get; set; }
-
-        public string Foo { get; set; }
-    }
-
-    public class O2OClassF
-    {
-        [PrimaryKey, AutoIncrement]
-        public int Id { get; set; }
-
-        [OneToOne]      // Inverse relationship, doesn't need foreign key
-        public O2OClassE ObjectE { get; set; }
-
-        public string Bar { get; set; }
-    }   
+       
 
     [TestFixture]
     public class OneToOneTests
     {
+        public class O2OClassA
+        {
+            [ForeignKey(typeof(O2OClassB))]     // Explicit foreign key attribute
+            public int OneClassBKey { get; set; }
+
+            [OneToOne]
+            public O2OClassB OneClassB { get; set; }
+        }
+
+        public class O2OClassB
+        {
+            [PrimaryKey, AutoIncrement]
+            public int Id { get; set; }
+
+            public string Foo { get; set; }
+        }
+
+        public class O2OClassC
+        {
+            [PrimaryKey, AutoIncrement]
+            public int ClassId { get; set; }
+
+            [OneToOne]     // OneToOne Foreign key can be declared in the referenced class
+            public O2OClassD ElementD { get; set; }
+
+            public string Bar { get; set; }
+        }
+
+        public class O2OClassD
+        {
+            [ForeignKey(typeof(O2OClassC))]    // Explicit foreign key attribute for a inverse relationship
+            public int ObjectCKey { get; set; }
+
+            public string Foo { get; set; }
+        }
+
+        public class O2OClassE
+        {
+            public int ObjectFKey { get; set; }
+
+            [OneToOne("ObjectFKey")]        // Explicit foreign key declaration
+            public O2OClassF ObjectF { get; set; }
+
+            public string Foo { get; set; }
+        }
+
+        public class O2OClassF
+        {
+            [PrimaryKey, AutoIncrement]
+            public int Id { get; set; }
+
+            [OneToOne]      // Inverse relationship, doesn't need foreign key
+            public O2OClassE ObjectE { get; set; }
+
+            public string Bar { get; set; }
+        }
+
 
         [Test]
         public void TestGetOneToOneDirect()
