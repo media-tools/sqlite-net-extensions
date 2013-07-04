@@ -77,6 +77,7 @@
     <Compile Include="Bootstrap\SqlitePluginBootstrap.cs" />
     <Compile Include="Main.cs" />
     <Compile Include="AppDelegate.cs" />
+    <Compile Include="Tests\ManyToManyTests.cs" />
     <Compile Include="Tests\ManyToOneTests.cs" />
     <Compile Include="Tests\OneToManyTests.cs" />
     <Compile Include="Tests\OneToOneTests.cs" />
