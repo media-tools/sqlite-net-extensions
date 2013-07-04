@@ -61,8 +61,29 @@ namespace SQLiteNetExtensions.IntegrationTests
             public string Foo { get; set; }
         }
 
+        public class O2MClassE
+        {
+            [PrimaryKey, AutoIncrement]
+            public int Id { get; set; }
+
+            [OneToMany("ClassEKey")]   // Explicit foreign key declaration
+            public O2MClassF[] FObjects { get; set; } // Array of objects instead of List
+
+            public string Bar { get; set; }
+        }
+
+        public class O2MClassF
+        {
+            [PrimaryKey, AutoIncrement]
+            public int Id { get; set; }
+
+            public int ClassEKey { get; set; }  // Foreign key declared in relationship
+
+            public string Foo { get; set; }
+        }
+
         [Test]
-        public void TestGetOneToMany()
+        public void TestGetOneToManyList()
         {
             var conn = new SQLiteConnection("database");
             conn.DropTable<O2MClassA>();
@@ -119,5 +140,127 @@ namespace SQLiteNetExtensions.IntegrationTests
                 Assert.IsTrue(foos.Contains(objectB.Foo));
             }
         }
+
+        [Test]
+        public void TestGetOneToManyListWithInverse()
+        {
+            var conn = new SQLiteConnection("database");
+            conn.DropTable<O2MClassC>();
+            conn.DropTable<O2MClassD>();
+            conn.CreateTable<O2MClassC>();
+            conn.CreateTable<O2MClassD>();
+
+            // Use standard SQLite-Net API to create the objects
+            var objectsD = new List<O2MClassD>
+            {
+                new O2MClassD {
+                    Foo = string.Format("1- Foo String {0}", new Random().Next(100))
+                },
+                new O2MClassD {
+                    Foo = string.Format("2- Foo String {0}", new Random().Next(100))
+                },
+                new O2MClassD {
+                    Foo = string.Format("3- Foo String {0}", new Random().Next(100))
+                },
+                new O2MClassD {
+                    Foo = string.Format("4- Foo String {0}", new Random().Next(100))
+                }
+            };
+            conn.InsertAll(objectsD);
+
+            var objectC = new O2MClassC();
+            conn.Insert(objectC);
+
+            Assert.Null(objectC.DObjects);
+
+            // Fetch (yet empty) the relationship
+            conn.GetChildren(ref objectC);
+            Assert.NotNull(objectC.DObjects);
+            Assert.AreEqual(0, objectC.DObjects.Count);
+
+            // Set the relationship using IDs
+            foreach (var objectD in objectsD)
+            {
+                objectD.ClassCKey = objectC.Id;
+                conn.Update(objectD);
+            }
+
+            Assert.NotNull(objectC.DObjects);
+            Assert.AreEqual(0, objectC.DObjects.Count);
+
+            // Fetch the relationship
+            conn.GetChildren(ref objectC);
+
+            Assert.NotNull(objectC.DObjects);
+            Assert.AreEqual(objectsD.Count, objectC.DObjects.Count);
+            var foos = objectsD.Select(objectB => objectB.Foo).ToList();
+            foreach (var objectD in objectC.DObjects)
+            {
+                Assert.IsTrue(foos.Contains(objectD.Foo));
+                Assert.AreEqual(objectC.Id, objectD.ObjectC.Id);
+                Assert.AreEqual(objectC.Bar, objectD.ObjectC.Bar);
+                Assert.AreSame(objectC, objectD.ObjectC); // Not only equal, they are the same!
+            }
+        }
+
+        [Test]
+        public void TestGetOneToManyArray()
+        {
+            var conn = new SQLiteConnection("database");
+            conn.DropTable<O2MClassE>();
+            conn.DropTable<O2MClassF>();
+            conn.CreateTable<O2MClassE>();
+            conn.CreateTable<O2MClassF>();
+
+            // Use standard SQLite-Net API to create the objects
+            var objectsF = new[]
+            {
+                new O2MClassF {
+                    Foo = string.Format("1- Foo String {0}", new Random().Next(100))
+                },
+                new O2MClassF {
+                    Foo = string.Format("2- Foo String {0}", new Random().Next(100))
+                },
+                new O2MClassF {
+                    Foo = string.Format("3- Foo String {0}", new Random().Next(100))
+                },
+                new O2MClassF {
+                    Foo = string.Format("4- Foo String {0}", new Random().Next(100))
+                }
+            };
+            conn.InsertAll(objectsF);
+
+            var objectE = new O2MClassE();
+            conn.Insert(objectE);
+
+            Assert.Null(objectE.FObjects);
+
+            // Fetch (yet empty) the relationship
+            conn.GetChildren(ref objectE);
+            Assert.NotNull(objectE.FObjects);
+            Assert.AreEqual(0, objectE.FObjects.Length);
+
+            // Set the relationship using IDs
+            foreach (var objectB in objectsF)
+            {
+                objectB.ClassEKey = objectE.Id;
+                conn.Update(objectB);
+            }
+
+            Assert.NotNull(objectE.FObjects);
+            Assert.AreEqual(0, objectE.FObjects.Length);
+
+            // Fetch the relationship
+            conn.GetChildren(ref objectE);
+
+            Assert.NotNull(objectE.FObjects);
+            Assert.AreEqual(objectsF.Length, objectE.FObjects.Length);
+            var foos = objectsF.Select(objectF => objectF.Foo).ToList();
+            foreach (var objectF in objectE.FObjects)
+            {
+                Assert.IsTrue(foos.Contains(objectF.Foo));
+            }
+        }
+
     }
 }

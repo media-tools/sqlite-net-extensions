@@ -179,7 +179,13 @@ namespace SQLiteNetExtensions.Extensions
                 }
                 else
                 {
-                    values = queryResults.ToArray();
+                    // Create a generic list of the expected type
+                    var array = Array.CreateInstance(entityType, new[]{queryResults.Count});
+                    for (var i = 0; i < queryResults.Count; i++)
+                    {
+                        array.SetValue(queryResults[i], i);
+                    }
+                    values = array;
                 }
             }
 
