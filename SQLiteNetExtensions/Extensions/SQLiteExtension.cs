@@ -1,4 +1,6 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
@@ -167,7 +169,13 @@ namespace SQLiteNetExtensions.Extensions
                 var queryResults = conn.Query(tableMapping, query, primaryKeyValue);
                 if (enclosedType == EnclosedType.List)
                 {
-                    values = queryResults.ToList();
+                    // Create a generic list of the expected type
+                    var list = (IList)Activator.CreateInstance(typeof (List<>).MakeGenericType(entityType));
+                    foreach (var result in queryResults)
+                    {
+                        list.Add(result);
+                    }
+                    values = list;
                 }
                 else
                 {
