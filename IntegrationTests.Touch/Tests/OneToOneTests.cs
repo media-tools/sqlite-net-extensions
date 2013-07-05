@@ -18,6 +18,9 @@ namespace SQLiteNetExtensions.IntegrationTests
     {
         public class O2OClassA
         {
+            [PrimaryKey, AutoIncrement]
+            public int Id { get; set; }
+
             [ForeignKey(typeof(O2OClassB))]     // Explicit foreign key attribute
             public int OneClassBKey { get; set; }
 
@@ -46,6 +49,9 @@ namespace SQLiteNetExtensions.IntegrationTests
 
         public class O2OClassD
         {
+            [PrimaryKey, AutoIncrement]
+            public int Id { get; set; }
+
             [ForeignKey(typeof(O2OClassC))]    // Explicit foreign key attribute for a inverse relationship
             public int ObjectCKey { get; set; }
 
@@ -54,6 +60,9 @@ namespace SQLiteNetExtensions.IntegrationTests
 
         public class O2OClassE
         {
+            [PrimaryKey, AutoIncrement]
+            public int Id { get; set; }
+
             public int ObjectFKey { get; set; }
 
             [OneToOne("ObjectFKey")]        // Explicit foreign key declaration
@@ -101,6 +110,7 @@ namespace SQLiteNetExtensions.IntegrationTests
 
             // Set the relationship using IDs
             objectA.OneClassBKey = objectB.Id;
+            conn.Update(objectA);
 
             Assert.Null(objectA.OneClassB);
 
@@ -182,6 +192,7 @@ namespace SQLiteNetExtensions.IntegrationTests
 
             // Set the relationship using IDs
             objectE.ObjectFKey = objectF.Id;
+            conn.Update(objectE);
 
             Assert.Null(objectE.ObjectF);
 
@@ -196,6 +207,53 @@ namespace SQLiteNetExtensions.IntegrationTests
             Assert.NotNull(objectE.ObjectF.ObjectE);
             Assert.AreEqual(objectE.Foo, objectE.ObjectF.ObjectE.Foo);
             Assert.AreSame(objectE, objectE.ObjectF.ObjectE);
+        }
+
+        [Test]
+        public void TestGetInverseOneToOneRelationshipWithExplicitKey()
+        {
+            var conn = new SQLiteConnection("database");
+            conn.DropTable<O2OClassE>();
+            conn.DropTable<O2OClassF>();
+            conn.CreateTable<O2OClassE>();
+            conn.CreateTable<O2OClassF>();
+
+            // Use standard SQLite-Net API to create a new relationship
+            var objectF = new O2OClassF
+            {
+                Bar = string.Format("Bar String {0}", new Random().Next(100))
+            };
+            conn.Insert(objectF);
+
+            var objectE = new O2OClassE
+            {
+                Foo = string.Format("Foo String {0}", new Random().Next(100))
+            };
+            conn.Insert(objectE);
+
+            Assert.Null(objectF.ObjectE);
+
+            // Fetch (yet empty) the relationship
+            conn.GetChildren(ref objectF);
+            Assert.Null(objectF.ObjectE);
+
+            // Set the relationship using IDs
+            objectE.ObjectFKey = objectF.Id;
+            conn.Update(objectE);
+
+            Assert.Null(objectF.ObjectE);
+
+            // Fetch the relationship
+            conn.GetChildren(ref objectF);
+
+            Assert.NotNull(objectF.ObjectE);
+            Assert.AreEqual(objectE.Foo, objectF.ObjectE.Foo);
+
+            // Check the inverse relationship
+            Assert.NotNull(objectF.ObjectE.ObjectF);
+            Assert.AreEqual(objectF.Id, objectF.ObjectE.ObjectF.Id);
+            Assert.AreEqual(objectF.Bar, objectF.ObjectE.ObjectF.Bar);
+            Assert.AreSame(objectF, objectF.ObjectE.ObjectF);
         }
     }
 }
