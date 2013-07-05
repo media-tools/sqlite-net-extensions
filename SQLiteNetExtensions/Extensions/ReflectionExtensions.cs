@@ -84,17 +84,40 @@ namespace SQLiteNetExtensions.Extensions
         {
             PropertyInfo result;
             var attribute = relationshipProperty.GetAttribute<RelationshipAttribute>();
+            RelationshipAttribute inverseAttribute = null;
 
             EnclosedType enclosedType;
             var propertyType = relationshipProperty.GetEntityType(out enclosedType);
 
             var originType = intermediateType ?? (inverse ? propertyType : type);
             var destinationType = inverse ? type : propertyType;
-            
-            if (!string.IsNullOrEmpty(attribute.ForeignKey))
+
+            // Inverse relationships may have the foreign key declared in the inverse property relationship attribute
+            var inverseProperty = type.GetInverseProperty(relationshipProperty);
+            if (inverseProperty != null)
+            {
+                inverseAttribute = inverseProperty.GetAttribute<RelationshipAttribute>();
+            }
+
+            if (!inverse && !string.IsNullOrEmpty(attribute.ForeignKey))
             {
                 // Explicitly declared foreign key name
                 result = originType.GetProperty(attribute.ForeignKey);
+            }
+            else if (!inverse && inverseAttribute != null && !string.IsNullOrEmpty(inverseAttribute.InverseForeignKey))
+            {
+                // Explicitly declared inverse foreign key name in inverse property (double inverse refers to current entity foreign key)
+                result = originType.GetProperty(inverseAttribute.InverseForeignKey);
+            }
+            else if (inverse && !string.IsNullOrEmpty(attribute.InverseForeignKey))
+            {
+                // Explicitly declared inverse foreign key name
+                result = originType.GetProperty(attribute.InverseForeignKey);
+            }
+            else if (inverse && inverseAttribute != null && !string.IsNullOrEmpty(inverseAttribute.ForeignKey))
+            {
+                // Explicitly declared foreign key name in inverse property
+                result = originType.GetProperty(inverseAttribute.ForeignKey);
             }
             else
             {

@@ -3,7 +3,7 @@
     public class OneToOneAttribute : RelationshipAttribute
     {
         public OneToOneAttribute(string foreignKey = null, string inverseProperty = null, OnDeleteAction onDeleteAction = OnDeleteAction.None) 
-            : base(foreignKey, inverseProperty, onDeleteAction)
+            : base(foreignKey, null, inverseProperty, onDeleteAction)
         {
         }
     }
