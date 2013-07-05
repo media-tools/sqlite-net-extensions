@@ -98,7 +98,7 @@ namespace SQLiteNetExtensions.Extensions
                 var primaryKeyValue = currentEntityPrimaryKeyProperty.GetValue(element, null);
                 if (primaryKeyValue != null)
                 {
-                    var query = string.Format("select * from {0} where {1} = ?", entityType.Name, otherEntityForeignKeyProperty.Name);
+                    var query = string.Format("select * from {0} where {1} = ? limit 1", entityType.Name, otherEntityForeignKeyProperty.Name);
                     value = conn.Query(tableMapping, query, primaryKeyValue).FirstOrDefault(); // Its a OneToOne, take only the first
                 }
             }
