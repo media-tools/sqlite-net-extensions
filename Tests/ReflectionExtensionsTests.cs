@@ -195,6 +195,19 @@ namespace SQLiteNetExtensions.Tests.Extensions
         }
 
         [Test]
+        public void TestForeignKeyInverseExplicitName()
+        {
+            var typeA = typeof (DummyClassA);
+            var typeB = typeof(DummyClassB);
+            var property = typeB.GetProperty("OneA");
+            var expectedForeignKeyProperty = typeA.GetProperty("DummyBForeignKey");
+
+            var foreignKeyProperty = typeB.GetForeignKeyProperty(property, inverse:true);
+
+            Assert.AreEqual(expectedForeignKeyProperty, foreignKeyProperty);
+        }
+
+        [Test]
         public void TestForeignKeyConventionName()
         {
             var typeB = typeof (DummyClassB);
