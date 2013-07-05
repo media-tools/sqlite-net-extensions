@@ -42,6 +42,32 @@ namespace SQLiteNetExtensions.IntegrationTests
             public int ClassBId { get; set; }
         }
 
+        public class M2MClassC
+        {
+            [PrimaryKey, AutoIncrement]
+            public int Id { get; set; }
+
+            [ManyToMany(typeof(ClassCClassD), inverseForeignKey:"ClassCId")]   // Foreign key specified in ManyToMany attribute
+            public M2MClassD[] DObjects { get; set; } // Array instead of List
+
+            public string Bar { get; set; }
+        }
+
+        public class M2MClassD
+        {
+            [PrimaryKey, AutoIncrement]
+            public int Id { get; set; }
+
+            public string Foo { get; set; }
+        }
+
+        public class ClassCClassD
+        {
+            public int ClassCId { get; set; }   // ForeignKey attribute not needed, already specified in the ManyToMany relationship
+            [ForeignKey(typeof(M2MClassD))]
+            public int ClassDId { get; set; }
+        }
+
 
         [Test]
         public void TestGetOneToManyList()
@@ -148,5 +174,109 @@ namespace SQLiteNetExtensions.IntegrationTests
             }
         }
 
+        [Test]
+        public void TestGetOneToManyArray()
+        {
+            // In this test we will create a N:M relationship between objects of ClassA and ClassB
+            //      Class C     -       Class D
+            // --------------------------------------
+            //          1       -       1
+            //          2       -       1, 2
+            //          3       -       1, 2, 3
+            //          4       -       1, 2, 3, 4
+
+            var conn = new SQLiteConnection("database");
+            conn.DropTable<M2MClassC>();
+            conn.DropTable<M2MClassD>();
+            conn.DropTable<ClassCClassD>();
+            conn.CreateTable<M2MClassC>();
+            conn.CreateTable<M2MClassD>();
+            conn.CreateTable<ClassCClassD>();
+
+            // Use standard SQLite-Net API to create the objects
+            var objectsD = new List<M2MClassD>
+            {
+                new M2MClassD {
+                    Foo = string.Format("1- Foo String {0}", new Random().Next(100))
+                },
+                new M2MClassD {
+                    Foo = string.Format("2- Foo String {0}", new Random().Next(100))
+                },
+                new M2MClassD {
+                    Foo = string.Format("3- Foo String {0}", new Random().Next(100))
+                },
+                new M2MClassD {
+                    Foo = string.Format("4- Foo String {0}", new Random().Next(100))
+                }
+            };
+            conn.InsertAll(objectsD);
+
+            var objectsC = new List<M2MClassC>
+            {
+                new M2MClassC {
+                    Bar = string.Format("1- Bar String {0}", new Random().Next(100))
+                },
+                new M2MClassC {
+                    Bar = string.Format("2- Bar String {0}", new Random().Next(100))
+                },
+                new M2MClassC {
+                    Bar = string.Format("3- Bar String {0}", new Random().Next(100))
+                },
+                new M2MClassC {
+                    Bar = string.Format("4- Bar String {0}", new Random().Next(100))
+                }
+            };
+
+            conn.InsertAll(objectsC);
+
+            foreach (var objectC in objectsC)
+            {
+                var copyC = objectC;
+                Assert.Null(objectC.DObjects);
+
+                // Fetch (yet empty) the relationship
+                conn.GetChildren(ref copyC);
+
+                Assert.NotNull(copyC.DObjects);
+                Assert.AreEqual(0, copyC.DObjects.Length);
+            }
+
+
+            // Create the relationships in the intermediate table
+            for (var cIndex = 0; cIndex < objectsC.Count; cIndex++)
+            {
+                for (var dIndex = 0; dIndex <= cIndex; dIndex++)
+                {
+                    conn.Insert(new ClassCClassD
+                    {
+                        ClassCId = objectsC[cIndex].Id,
+                        ClassDId = objectsD[dIndex].Id
+                    });
+                }
+            }
+
+
+            for (var i = 0; i < objectsC.Count; i++)
+            {
+                var objectC = objectsC[i];
+
+                // Relationship still empty because hasn't been refreshed
+                Assert.NotNull(objectC.DObjects);
+                Assert.AreEqual(0, objectC.DObjects.Length);
+
+                // Fetch the relationship
+                conn.GetChildren(ref objectC);
+
+                var childrenCount = i + 1;
+
+                Assert.NotNull(objectC.DObjects);
+                Assert.AreEqual(childrenCount, objectC.DObjects.Length);
+                var foos = objectsD.GetRange(0, childrenCount).Select(objectB => objectB.Foo).ToList();
+                foreach (var objectD in objectC.DObjects)
+                {
+                    Assert.IsTrue(foos.Contains(objectD.Foo));
+                }
+            }
+        }
     }
 }
