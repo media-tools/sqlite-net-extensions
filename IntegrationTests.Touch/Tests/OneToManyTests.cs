@@ -262,5 +262,187 @@ namespace SQLiteNetExtensions.IntegrationTests
             }
         }
 
+        [Test]
+        public void TestUpdateSetOneToManyList()
+        {
+            var conn = new SQLiteConnection("database");
+            conn.DropTable<O2MClassA>();
+            conn.DropTable<O2MClassB>();
+            conn.CreateTable<O2MClassA>();
+            conn.CreateTable<O2MClassB>();
+
+            // Use standard SQLite-Net API to create the objects
+            var objectsB = new List<O2MClassB>
+            {
+                new O2MClassB {
+                    Foo = string.Format("1- Foo String {0}", new Random().Next(100))
+                },
+                new O2MClassB {
+                    Foo = string.Format("2- Foo String {0}", new Random().Next(100))
+                },
+                new O2MClassB {
+                    Foo = string.Format("3- Foo String {0}", new Random().Next(100))
+                },
+                new O2MClassB {
+                    Foo = string.Format("4- Foo String {0}", new Random().Next(100))
+                }
+            };
+            conn.InsertAll(objectsB);
+
+            var objectA = new O2MClassA();
+            conn.Insert(objectA);
+
+            Assert.Null(objectA.BObjects);
+
+            objectA.BObjects = objectsB;
+
+            foreach (var objectB in objectsB)
+            {
+                Assert.AreEqual(0, objectB.ClassAKey, "Foreign keys shouldn't have been updated yet");
+            }
+
+
+            conn.UpdateWithChildren(objectA);
+
+            foreach (var objectB in objectA.BObjects)
+            {
+                Assert.AreEqual(objectA.Id, objectB.ClassAKey, "Foreign keys haven't been updated yet");
+
+                // Check database values
+                var newObjectB = conn.Get<O2MClassB>(objectB.Id);
+                Assert.AreEqual(objectA.Id, newObjectB.ClassAKey, "Database stored value is not correct");
+            }
+
+
+        }
+
+        [Test]
+        public void TestUpdateUnsetOneToManyEmptyList()
+        {
+            var conn = new SQLiteConnection("database");
+            conn.DropTable<O2MClassA>();
+            conn.DropTable<O2MClassB>();
+            conn.CreateTable<O2MClassA>();
+            conn.CreateTable<O2MClassB>();
+
+            // Use standard SQLite-Net API to create the objects
+            var objectsB = new List<O2MClassB>
+            {
+                new O2MClassB {
+                    Foo = string.Format("1- Foo String {0}", new Random().Next(100))
+                },
+                new O2MClassB {
+                    Foo = string.Format("2- Foo String {0}", new Random().Next(100))
+                },
+                new O2MClassB {
+                    Foo = string.Format("3- Foo String {0}", new Random().Next(100))
+                },
+                new O2MClassB {
+                    Foo = string.Format("4- Foo String {0}", new Random().Next(100))
+                }
+            };
+            conn.InsertAll(objectsB);
+
+            var objectA = new O2MClassA();
+            conn.Insert(objectA);
+
+            Assert.Null(objectA.BObjects);
+
+            objectA.BObjects = objectsB;
+
+            foreach (var objectB in objectsB)
+            {
+                Assert.AreEqual(0, objectB.ClassAKey, "Foreign keys shouldn't have been updated yet");
+            }
+
+            conn.UpdateWithChildren(objectA);
+
+            foreach (var objectB in objectA.BObjects)
+            {
+                Assert.AreEqual(objectA.Id, objectB.ClassAKey, "Foreign keys haven't been updated yet");
+
+                // Check database values
+                var newObjectB = conn.Get<O2MClassB>(objectB.Id);
+                Assert.AreEqual(objectA.Id, newObjectB.ClassAKey, "Database stored value is not correct");
+            }
+
+            // At this point the test is exactly the same as TestUpdateSetOneToManyList
+            objectA.BObjects = new List<O2MClassB>(); // Reset the relationship
+
+            conn.UpdateWithChildren(objectA);
+
+            foreach (var objectB in objectsB)
+            {
+                // Check database values
+                var newObjectB = conn.Get<O2MClassB>(objectB.Id);
+                Assert.AreEqual(0, newObjectB.ClassAKey, "Database stored value is not correct");
+            }
+
+        }
+
+        [Test]
+        public void TestUpdateUnsetOneToManyNullList()
+        {
+            var conn = new SQLiteConnection("database");
+            conn.DropTable<O2MClassA>();
+            conn.DropTable<O2MClassB>();
+            conn.CreateTable<O2MClassA>();
+            conn.CreateTable<O2MClassB>();
+
+            // Use standard SQLite-Net API to create the objects
+            var objectsB = new List<O2MClassB>
+            {
+                new O2MClassB {
+                    Foo = string.Format("1- Foo String {0}", new Random().Next(100))
+                },
+                new O2MClassB {
+                    Foo = string.Format("2- Foo String {0}", new Random().Next(100))
+                },
+                new O2MClassB {
+                    Foo = string.Format("3- Foo String {0}", new Random().Next(100))
+                },
+                new O2MClassB {
+                    Foo = string.Format("4- Foo String {0}", new Random().Next(100))
+                }
+            };
+            conn.InsertAll(objectsB);
+
+            var objectA = new O2MClassA();
+            conn.Insert(objectA);
+
+            Assert.Null(objectA.BObjects);
+
+            objectA.BObjects = objectsB;
+
+            foreach (var objectB in objectsB)
+            {
+                Assert.AreEqual(0, objectB.ClassAKey, "Foreign keys shouldn't have been updated yet");
+            }
+
+            conn.UpdateWithChildren(objectA);
+
+            foreach (var objectB in objectA.BObjects)
+            {
+                Assert.AreEqual(objectA.Id, objectB.ClassAKey, "Foreign keys haven't been updated yet");
+
+                // Check database values
+                var newObjectB = conn.Get<O2MClassB>(objectB.Id);
+                Assert.AreEqual(objectA.Id, newObjectB.ClassAKey, "Database stored value is not correct");
+            }
+
+            // At this point the test is exactly the same as TestUpdateSetOneToManyList
+            objectA.BObjects = null; // Reset the relationship
+
+            conn.UpdateWithChildren(objectA);
+
+            foreach (var objectB in objectsB)
+            {
+                // Check database values
+                var newObjectB = conn.Get<O2MClassB>(objectB.Id);
+                Assert.AreEqual(0, newObjectB.ClassAKey, "Database stored value is not correct");
+            }
+
+        }
+
     }
 }
