@@ -310,7 +310,64 @@ namespace SQLiteNetExtensions.Extensions
 
         private static void UpdateInverseForeignKeys<T>(this SQLiteConnection conn, T element)
         {
-            
+            var type = typeof (T);
+            foreach (var relationshipProperty in type.GetRelationshipProperties())
+            {
+                EnclosedType enclosedType;
+                var entityType = relationshipProperty.GetEntityType(out enclosedType);
+
+                var relationshipAttribute = relationshipProperty.GetAttribute<RelationshipAttribute>();
+                if (relationshipAttribute is OneToManyAttribute)
+                {
+                    var originPrimaryKeyProperty = type.GetPrimaryKey();
+                    var inversePrimaryKeyProperty = entityType.GetPrimaryKey();
+                    var inverseForeignKeyProperty = type.GetForeignKeyProperty(relationshipProperty, inverse: true);
+
+                    Debug.Assert(enclosedType != EnclosedType.None, "OneToMany relationships must be List or Array of entities");
+                    Debug.Assert(originPrimaryKeyProperty != null, "OneToMany relationships require Primary Key in the origin entity");
+                    Debug.Assert(inversePrimaryKeyProperty != null, "OneToMany relationships require Primary Key in the destination entity");
+                    Debug.Assert(inverseForeignKeyProperty != null, "Unable to find foreign key for OneToMany relationship");
+
+                    var inverseProperty = type.GetInverseProperty(relationshipProperty);
+                    if (inverseProperty != null)
+                    {
+                        EnclosedType inverseEnclosedType;
+                        var inverseEntityType = relationshipProperty.GetEntityType(out inverseEnclosedType);
+                        Debug.Assert(inverseEnclosedType == EnclosedType.None, "OneToMany inverse relationship shouldn't be List or Array");
+                        Debug.Assert(inverseEntityType == type, "OneToMany inverse relationship is not the expected type");
+                    }
+
+                    var keyValue = originPrimaryKeyProperty.GetValue(element, null);
+                    var children = (IEnumerable) relationshipProperty.GetValue(element, null);
+                    var childrenKeyList = new List<object>();
+                    if (children != null)
+                    {
+                        foreach (var child in children)
+                        {
+                            var childKey = inversePrimaryKeyProperty.GetValue(child, null);
+                            childrenKeyList.Add(childKey);
+
+                            inverseForeignKeyProperty.SetValue(child, keyValue, null);
+                            if (inverseProperty != null)
+                            {
+                                inverseProperty.SetValue(child, element, null);
+                            }
+                        }
+                    }
+
+                    // Objects already updated, now change the database
+                    var childrenKeys = string.Join(",", childrenKeyList);
+                    var query = string.Format("update {0} set {1} = ? where {2} in ({3})",
+                        entityType.Name, inverseForeignKeyProperty.Name, inversePrimaryKeyProperty.Name, childrenKeys);
+                    conn.Execute(query, keyValue);
+
+                    // Delete previous relationships
+                    var deleteQuery = string.Format("update {0} set {1} = NULL where {2} not in ({3})",
+                        entityType.Name, inverseForeignKeyProperty.Name, inversePrimaryKeyProperty.Name, childrenKeys);
+                    conn.Execute(deleteQuery);
+
+                }
+            }
         }
             
 
