@@ -289,11 +289,17 @@ namespace SQLiteNetExtensions.Extensions
                     var foreignKeyProperty = type.GetForeignKeyProperty(relationshipProperty);
                     if (foreignKeyProperty != null)
                     {
+                        EnclosedType enclosedType;
+                        var entityType = relationshipProperty.GetEntityType(out enclosedType);
+                        var destinationPrimaryKeyProperty = entityType.GetPrimaryKey();
+                        Debug.Assert(enclosedType == EnclosedType.None, "ToOne relationships cannot be lists or arrays");
+                        Debug.Assert(destinationPrimaryKeyProperty != null, "Found foreign key but destination Type doesn't have primary key");
+
                         var relationshipValue = relationshipProperty.GetValue(element, null);
                         object foreignKeyValue = null;
                         if (relationshipValue != null)
                         {
-                            foreignKeyValue = foreignKeyProperty.GetValue(element, null);
+                            foreignKeyValue = destinationPrimaryKeyProperty.GetValue(relationshipValue, null);
                         }
                         foreignKeyProperty.SetValue(element, foreignKeyValue, null);
                     }
