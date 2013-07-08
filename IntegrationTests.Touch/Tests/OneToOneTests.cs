@@ -255,5 +255,75 @@ namespace SQLiteNetExtensions.IntegrationTests
             Assert.AreEqual(objectF.Bar, objectF.ObjectE.ObjectF.Bar);
             Assert.AreSame(objectF, objectF.ObjectE.ObjectF);
         }
+
+        [Test]
+        public void TestUpdateSetOneToOneRelationship()
+        {
+            var conn = new SQLiteConnection("database");
+            conn.DropTable<O2OClassA>();
+            conn.DropTable<O2OClassB>();
+            conn.CreateTable<O2OClassA>();
+            conn.CreateTable<O2OClassB>();
+
+            // Use standard SQLite-Net API to create a new relationship
+            var objectB = new O2OClassB
+            {
+                Foo = string.Format("Foo String {0}", new Random().Next(100))
+            };
+            conn.Insert(objectB);
+
+            var objectA = new O2OClassA();
+            conn.Insert(objectA);
+
+            // Set the relationship using IDs
+            objectA.OneClassB = objectB;
+            Assert.AreEqual(0, objectA.OneClassBKey);
+
+            conn.UpdateWithChildren(objectA);
+
+            Assert.AreEqual(objectB.Id, objectA.OneClassBKey, "Foreign key should have been refreshed");
+
+            // Fetch the relationship
+            var newObjectA = conn.Get<O2OClassA>(objectA.Id);
+            Assert.AreEqual(objectB.Id, newObjectA.OneClassBKey, "Foreign key should have been refreshed in database");
+
+        }
+
+        [Test]
+        public void TestUpdateUnSetOneToOneRelationship()
+        {
+            var conn = new SQLiteConnection("database");
+            conn.DropTable<O2OClassA>();
+            conn.DropTable<O2OClassB>();
+            conn.CreateTable<O2OClassA>();
+            conn.CreateTable<O2OClassB>();
+
+            // Use standard SQLite-Net API to create a new relationship
+            var objectB = new O2OClassB
+            {
+                Foo = string.Format("Foo String {0}", new Random().Next(100))
+            };
+            conn.Insert(objectB);
+
+            var objectA = new O2OClassA();
+            conn.Insert(objectA);
+
+            // Set the relationship using IDs
+            objectA.OneClassB = objectB;
+            Assert.AreEqual(0, objectA.OneClassBKey);
+
+            conn.UpdateWithChildren(objectA);
+
+            Assert.AreEqual(objectB.Id, objectA.OneClassBKey, "Foreign key should have been refreshed");
+
+            // Until here, test is same that TestUpdateSetOneToOneRelationship
+            objectA.OneClassB = null; // Unset relationship
+
+            Assert.AreEqual(objectB.Id, objectA.OneClassBKey, "Foreign key shouldn't have been refreshed yet");
+
+            conn.UpdateWithChildren(objectA);
+
+            Assert.AreEqual(0, objectA.OneClassBKey, "Foreign key hasn't been unset");
+        }
     }
 }
