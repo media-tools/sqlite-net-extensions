@@ -17,6 +17,9 @@ namespace SQLiteNetExtensions.IntegrationTests
     {
         public class M2OClassA
         {
+            [PrimaryKey, AutoIncrement]
+            public int Id { get; set; }
+
             [ForeignKey(typeof(M2OClassB))]
             public int OneClassBKey { get; set; }
 
@@ -70,5 +73,73 @@ namespace SQLiteNetExtensions.IntegrationTests
             Assert.AreEqual(objectB.Foo, objectA.OneClassB.Foo);
         }
 
+        [Test]
+        public void TestUpdateSetManyToOne()
+        {
+            var conn = new SQLiteConnection("database");
+            conn.DropTable<M2OClassA>();
+            conn.DropTable<M2OClassB>();
+            conn.CreateTable<M2OClassA>();
+            conn.CreateTable<M2OClassB>();
+
+            // Use standard SQLite-Net API to create a new relationship
+            var objectB = new M2OClassB
+            {
+                Foo = string.Format("Foo String {0}", new Random().Next(100))
+            };
+            conn.Insert(objectB);
+
+            var objectA = new M2OClassA();
+            conn.Insert(objectA);
+
+            Assert.Null(objectA.OneClassB);
+            Assert.AreEqual(0, objectA.OneClassBKey);
+
+            objectA.OneClassB = objectB;
+            Assert.AreEqual(0, objectA.OneClassBKey);
+
+            conn.UpdateWithChildren(objectA);
+
+            Assert.AreEqual(objectB.Id, objectA.OneClassBKey);
+
+            var newObjectA = conn.Get<M2OClassA>(objectA.Id);
+            Assert.AreEqual(objectB.Id, newObjectA.OneClassBKey);
+        }
+
+        [Test]
+        public void TestUpdateUnsetManyToOne()
+        {
+            var conn = new SQLiteConnection("database");
+            conn.DropTable<M2OClassA>();
+            conn.DropTable<M2OClassB>();
+            conn.CreateTable<M2OClassA>();
+            conn.CreateTable<M2OClassB>();
+
+            // Use standard SQLite-Net API to create a new relationship
+            var objectB = new M2OClassB
+            {
+                Foo = string.Format("Foo String {0}", new Random().Next(100))
+            };
+            conn.Insert(objectB);
+
+            var objectA = new M2OClassA();
+            conn.Insert(objectA);
+
+            Assert.Null(objectA.OneClassB);
+            Assert.AreEqual(0, objectA.OneClassBKey);
+
+            objectA.OneClassB = objectB;
+            Assert.AreEqual(0, objectA.OneClassBKey);
+
+            conn.UpdateWithChildren(objectA);
+
+            // Until here, the test is exactly the same as TestUpdateSetManyToOne
+            objectA.OneClassB = null;   // Unset the relationship
+            Assert.AreEqual(objectB.Id, objectA.OneClassBKey, "Foreign key shouldn't have been refreshed yet");
+
+            conn.UpdateWithChildren(objectA);
+            Assert.AreEqual(0, objectA.OneClassBKey);
+            Assert.Null(objectA.OneClassB);
+        }
     }
 }
