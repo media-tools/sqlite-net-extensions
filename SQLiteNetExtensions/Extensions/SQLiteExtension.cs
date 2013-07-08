@@ -267,6 +267,48 @@ namespace SQLiteNetExtensions.Extensions
             relationshipProperty.SetValue(element, values, null);
 
         }
+
+        public static void UpdateWithChildren<T>(this SQLiteConnection conn, T element)
+        {
+            // Update the current element
+            RefreshForeignKeys(ref element);
+            conn.Update(element);
+
+            // Update inverse foreign keys
+            conn.UpdateInverseForeignKeys(element);
+        }
+
+        private static void RefreshForeignKeys<T>(ref T element)
+        {
+            var type = typeof (T);
+            foreach (var relationshipProperty in type.GetRelationshipProperties())
+            {
+                var relationshipAttribute = relationshipProperty.GetAttribute<RelationshipAttribute>();
+                if (relationshipAttribute is OneToOneAttribute || relationshipAttribute is ManyToOneAttribute)
+                {
+                    var foreignKeyProperty = type.GetForeignKeyProperty(relationshipProperty);
+                    if (foreignKeyProperty != null)
+                    {
+                        var relationshipValue = relationshipProperty.GetValue(element, null);
+                        object foreignKeyValue = null;
+                        if (relationshipValue != null)
+                        {
+                            foreignKeyValue = foreignKeyProperty.GetValue(element, null);
+                        }
+                        foreignKeyProperty.SetValue(element, foreignKeyValue, null);
+                    }
+                }
+            }
+        }
+
+
+        private static void UpdateInverseForeignKeys<T>(this SQLiteConnection conn, T element)
+        {
+            
+        }
+            
+
     } 
+
 
 }
