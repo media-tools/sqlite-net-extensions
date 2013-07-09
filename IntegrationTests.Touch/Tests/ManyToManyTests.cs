@@ -70,7 +70,7 @@ namespace SQLiteNetExtensions.IntegrationTests
 
 
         [Test]
-        public void TestGetOneToManyList()
+        public void TestGetManyToManyList()
         {
             // In this test we will create a N:M relationship between objects of ClassA and ClassB
             //      Class A     -       Class B
@@ -175,7 +175,7 @@ namespace SQLiteNetExtensions.IntegrationTests
         }
 
         [Test]
-        public void TestGetOneToManyArray()
+        public void TestGetManyToManyArray()
         {
             // In this test we will create a N:M relationship between objects of ClassA and ClassB
             //      Class C     -       Class D
@@ -275,6 +275,224 @@ namespace SQLiteNetExtensions.IntegrationTests
                 foreach (var objectD in objectC.DObjects)
                 {
                     Assert.IsTrue(foos.Contains(objectD.Foo));
+                }
+            }
+        }
+
+        [Test]
+        public void TestUpdateSetManyToManyList()
+        {
+            // In this test we will create a N:M relationship between objects of ClassA and ClassB
+            //      Class A     -       Class B
+            // --------------------------------------
+            //          1       -       1
+            //          2       -       1, 2
+            //          3       -       1, 2, 3
+            //          4       -       1, 2, 3, 4
+
+            var conn = new SQLiteConnection("database");
+            conn.DropTable<M2MClassA>();
+            conn.DropTable<M2MClassB>();
+            conn.DropTable<ClassAClassB>();
+            conn.CreateTable<M2MClassA>();
+            conn.CreateTable<M2MClassB>();
+            conn.CreateTable<ClassAClassB>();
+
+            // Use standard SQLite-Net API to create the objects
+            var objectsB = new List<M2MClassB>
+            {
+                new M2MClassB {
+                    Foo = string.Format("1- Foo String {0}", new Random().Next(100))
+                },
+                new M2MClassB {
+                    Foo = string.Format("2- Foo String {0}", new Random().Next(100))
+                },
+                new M2MClassB {
+                    Foo = string.Format("3- Foo String {0}", new Random().Next(100))
+                },
+                new M2MClassB {
+                    Foo = string.Format("4- Foo String {0}", new Random().Next(100))
+                }
+            };
+            conn.InsertAll(objectsB);
+
+            var objectsA = new List<M2MClassA>
+            {
+                new M2MClassA {
+                    Bar = string.Format("1- Bar String {0}", new Random().Next(100)),
+                    BObjects = new List<M2MClassB>()
+                },
+                new M2MClassA {
+                    Bar = string.Format("2- Bar String {0}", new Random().Next(100)),
+                    BObjects = new List<M2MClassB>()
+                },
+                new M2MClassA {
+                    Bar = string.Format("3- Bar String {0}", new Random().Next(100)),
+                    BObjects = new List<M2MClassB>()
+                },
+                new M2MClassA {
+                    Bar = string.Format("4- Bar String {0}", new Random().Next(100)),
+                    BObjects = new List<M2MClassB>()
+                }
+            };
+
+            conn.InsertAll(objectsA);
+
+            // Create the relationships
+            for (var aIndex = 0; aIndex < objectsA.Count; aIndex++)
+            {
+                var objectA = objectsA[aIndex];
+
+                for (var bIndex = 0; bIndex <= aIndex; bIndex++)
+                {
+                    var objectB = objectsB[bIndex];
+                    objectA.BObjects.Add(objectB);
+                }
+            
+                conn.UpdateWithChildren(objectA);
+            }
+
+
+            for (var i = 0; i < objectsA.Count; i++)
+            {
+                var objectA = objectsA[i];
+                var childrenCount = i + 1;
+                var storedChildKeyList = (from ClassAClassB ab in conn.Table<ClassAClassB>()
+                                          where ab.ClassAId == objectA.Id
+                                          select ab.ClassBId).ToList();
+                                         
+
+                Assert.AreEqual(childrenCount, storedChildKeyList.Count, "Relationship count is not correct");
+                var expectedChildIds = objectsB.GetRange(0, childrenCount).Select(objectB => objectB.Id).ToList();
+                foreach (var objectBKey in storedChildKeyList)
+                {
+                    Assert.IsTrue(expectedChildIds.Contains(objectBKey), "Relationship ID is not correct");
+                }
+            }
+        }
+
+        [Test]
+        public void TestUpdateUnsetManyToManyList()
+        {
+            // In this test we will create a N:M relationship between objects of ClassA and ClassB
+            //      Class A     -       Class B
+            // --------------------------------------
+            //          1       -       1
+            //          2       -       1, 2
+            //          3       -       1, 2, 3
+            //          4       -       1, 2, 3, 4
+
+            // After that, we will remove objects 1 and 2 from relationships
+            //      Class A     -       Class B
+            // --------------------------------------
+            //          1       -       <empty>
+            //          2       -       <empty>
+            //          3       -       3
+            //          4       -       3, 4
+
+
+            var conn = new SQLiteConnection("database");
+            conn.DropTable<M2MClassA>();
+            conn.DropTable<M2MClassB>();
+            conn.DropTable<ClassAClassB>();
+            conn.CreateTable<M2MClassA>();
+            conn.CreateTable<M2MClassB>();
+            conn.CreateTable<ClassAClassB>();
+
+            // Use standard SQLite-Net API to create the objects
+            var objectsB = new List<M2MClassB>
+            {
+                new M2MClassB {
+                    Foo = string.Format("1- Foo String {0}", new Random().Next(100))
+                },
+                new M2MClassB {
+                    Foo = string.Format("2- Foo String {0}", new Random().Next(100))
+                },
+                new M2MClassB {
+                    Foo = string.Format("3- Foo String {0}", new Random().Next(100))
+                },
+                new M2MClassB {
+                    Foo = string.Format("4- Foo String {0}", new Random().Next(100))
+                }
+            };
+            conn.InsertAll(objectsB);
+
+            var objectsA = new List<M2MClassA>
+            {
+                new M2MClassA {
+                    Bar = string.Format("1- Bar String {0}", new Random().Next(100)),
+                    BObjects = new List<M2MClassB>()
+                },
+                new M2MClassA {
+                    Bar = string.Format("2- Bar String {0}", new Random().Next(100)),
+                    BObjects = new List<M2MClassB>()
+                },
+                new M2MClassA {
+                    Bar = string.Format("3- Bar String {0}", new Random().Next(100)),
+                    BObjects = new List<M2MClassB>()
+                },
+                new M2MClassA {
+                    Bar = string.Format("4- Bar String {0}", new Random().Next(100)),
+                    BObjects = new List<M2MClassB>()
+                }
+            };
+
+            conn.InsertAll(objectsA);
+
+            // Create the relationships
+            for (var aIndex = 0; aIndex < objectsA.Count; aIndex++)
+            {
+                var objectA = objectsA[aIndex];
+
+                for (var bIndex = 0; bIndex <= aIndex; bIndex++)
+                {
+                    var objectB = objectsB[bIndex];
+                    objectA.BObjects.Add(objectB);
+                }
+
+                conn.UpdateWithChildren(objectA);
+            }
+
+            // At these points all the relationships are set
+            //      Class A     -       Class B
+            // --------------------------------------
+            //          1       -       1
+            //          2       -       1, 2
+            //          3       -       1, 2, 3
+            //          4       -       1, 2, 3, 4
+
+            // Now we will remove ClassB objects 1 and 2 from the relationships
+            var objectsBToRemove = objectsB.GetRange(0, 2);
+
+            foreach (var objectA in objectsA)
+            {
+                objectA.BObjects.RemoveAll(objectsBToRemove.Contains);
+                conn.UpdateWithChildren(objectA);
+            }
+
+            // This should now be the current status of all relationships
+
+            //      Class A     -       Class B
+            // --------------------------------------
+            //          1       -       <empty>
+            //          2       -       <empty>
+            //          3       -       3
+            //          4       -       3, 4
+
+            for (var i = 0; i < objectsA.Count; i++)
+            {
+                var objectA = objectsA[i];
+
+                var storedChildKeyList = (from ClassAClassB ab in conn.Table<ClassAClassB>()
+                                          where ab.ClassAId == objectA.Id
+                                          select ab.ClassBId).ToList();
+
+
+                var expectedChildIds = objectsB.GetRange(0, i + 1).Where(b => !objectsBToRemove.Contains(b)).Select(objectB => objectB.Id).ToList();
+                Assert.AreEqual(expectedChildIds.Count, storedChildKeyList.Count, string.Format("Relationship count is not correct for Object with Id {0}", objectA.Id));
+                foreach (var objectBKey in storedChildKeyList)
+                {
+                    Assert.IsTrue(expectedChildIds.Contains(objectBKey), "Relationship ID is not correct");
                 }
             }
         }
