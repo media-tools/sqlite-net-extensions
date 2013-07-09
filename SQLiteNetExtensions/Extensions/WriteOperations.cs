@@ -220,7 +220,10 @@ namespace SQLiteNetExtensions.Extensions
             // Check for already existing relationships
             var currentChildrenQuery = string.Format("select {0} from {1} where {2} == ? and {0} in ({3})",
                 otherEntityForeignKeyProperty.Name, intermediateType.Name, currentEntityForeignKeyProperty.Name, childKeysString);
-            var currentChildKeyList = conn.Query(conn.GetMapping(intermediateType), currentChildrenQuery, primaryKey);
+            var currentChildKeyList =
+                from object child in conn.Query(conn.GetMapping(intermediateType), currentChildrenQuery, primaryKey)
+                select otherEntityForeignKeyProperty.GetValue(child, null);
+            
 
             // Insert missing relationships in the intermediate table
             var missingChildKeyList = childKeyList.Where(o => !currentChildKeyList.Contains(o)).ToList();
