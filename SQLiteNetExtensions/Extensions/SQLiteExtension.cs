@@ -307,8 +307,7 @@ namespace SQLiteNetExtensions.Extensions
 
         private static void UpdateInverseForeignKeys<T>(this SQLiteConnection conn, T element)
         {
-            var type = typeof (T);
-            foreach (var relationshipProperty in type.GetRelationshipProperties())
+            foreach (var relationshipProperty in typeof(T).GetRelationshipProperties())
             {
                 var relationshipAttribute = relationshipProperty.GetAttribute<RelationshipAttribute>();
                 if (relationshipAttribute is OneToManyAttribute)
