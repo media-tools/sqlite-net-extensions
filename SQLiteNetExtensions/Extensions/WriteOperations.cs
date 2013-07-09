@@ -1,6 +1,8 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using System.Reflection;
 using Cirrious.MvvmCross.Plugins.Sqlite;
 using SQLiteNetExtensions.Attributes;
@@ -188,7 +190,57 @@ namespace SQLiteNetExtensions.Extensions
 
         private static void UpdateManyToManyForeignKeys<T>(this ISQLiteConnection conn, T element, PropertyInfo relationshipProperty)
         {
-            
+            var type = typeof (T);
+
+            EnclosedType enclosedType;
+            var entityType = relationshipProperty.GetEntityType(out enclosedType);
+
+            var currentEntityPrimaryKeyProperty = type.GetPrimaryKey();
+            var otherEntityPrimaryKeyProperty = entityType.GetPrimaryKey();
+            var manyToManyMetaInfo = type.GetManyToManyMetaInfo(relationshipProperty);
+            var currentEntityForeignKeyProperty = manyToManyMetaInfo.OriginProperty;
+            var otherEntityForeignKeyProperty = manyToManyMetaInfo.DestinationProperty;
+            var intermediateType = manyToManyMetaInfo.IntermediateType;
+
+            Debug.Assert(enclosedType != EnclosedType.None, "ManyToMany relationship must be a List or Array");
+            Debug.Assert(currentEntityPrimaryKeyProperty != null, "ManyToMany relationship origin must have Primary Key");
+            Debug.Assert(otherEntityPrimaryKeyProperty != null, "ManyToMany relationship destination must have Primary Key");
+            Debug.Assert(intermediateType != null, "ManyToMany relationship intermediate type cannot be null");
+            Debug.Assert(currentEntityForeignKeyProperty != null, "ManyToMany relationship origin must have a foreign key defined in the intermediate type");
+            Debug.Assert(otherEntityForeignKeyProperty != null, "ManyToMany relationship destination must have a foreign key defined in the intermediate type");
+
+            var primaryKey = currentEntityPrimaryKeyProperty.GetValue(element, null);
+
+            // Obtain the list of children keys
+            var childList = (IEnumerable)relationshipProperty.GetValue(element, null);
+            var childKeyList = (from object child in childList ?? new List<object>()
+                               select otherEntityPrimaryKeyProperty.GetValue(child, null)).ToList();
+            var childKeysString = string.Join(",", childKeyList);
+
+            // Check for already existing relationships
+            var currentChildrenQuery = string.Format("select {0} from {1} where {2} == ? and {0} in ({3})",
+                otherEntityForeignKeyProperty.Name, intermediateType.Name, currentEntityForeignKeyProperty.Name, childKeysString);
+            var currentChildKeyList = conn.Query(conn.GetMapping(intermediateType), currentChildrenQuery, primaryKey);
+
+            // Insert missing relationships in the intermediate table
+            var missingChildKeyList = childKeyList.Where(o => !currentChildKeyList.Contains(o)).ToList();
+            var missingIntermediateObjects = new List<object>(missingChildKeyList.Count);
+            foreach (var missingChildKey in missingChildKeyList)
+            {
+                var intermediateObject = Activator.CreateInstance(intermediateType);
+                currentEntityForeignKeyProperty.SetValue(intermediateObject, primaryKey, null);
+                otherEntityForeignKeyProperty.SetValue(intermediateObject, missingChildKey, null);
+
+                missingIntermediateObjects.Add(intermediateObject);
+            }
+
+            conn.InsertAll(missingIntermediateObjects);
+
+            // Delete any other pending relationship
+            var deleteQuery = string.Format("delete from {0} where {1} == ? and {2} not in ({3})",
+                intermediateType.Name, currentEntityForeignKeyProperty.Name,
+                otherEntityForeignKeyProperty.Name, childKeysString);
+            conn.Execute(deleteQuery, primaryKey);
         }
     }
 }
