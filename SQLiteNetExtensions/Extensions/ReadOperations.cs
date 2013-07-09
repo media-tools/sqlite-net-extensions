@@ -216,25 +216,20 @@ namespace SQLiteNetExtensions.Extensions
             EnclosedType enclosedType;
             var entityType = relationshipProperty.GetEntityType(out enclosedType);
 
-            Debug.Assert(enclosedType != EnclosedType.None, "ManyToMany relationship must be a List or Array");
-
             var currentEntityPrimaryKeyProperty = type.GetPrimaryKey();
             var otherEntityPrimaryKeyProperty = entityType.GetPrimaryKey();
-            Debug.Assert(currentEntityPrimaryKeyProperty != null, "ManyToMany relationship origin must have Primary Key");
-            Debug.Assert(otherEntityPrimaryKeyProperty != null,
-                         "ManyToMany relationship destination must have Primary Key");
-
             var manyToManyMetaInfo = type.GetManyToManyMetaInfo(relationshipProperty);
             var currentEntityForeignKeyProperty = manyToManyMetaInfo.OriginProperty;
             var otherEntityForeignKeyProperty = manyToManyMetaInfo.DestinationProperty;
             var intermediateType = manyToManyMetaInfo.IntermediateType;
-            Debug.Assert(intermediateType != null, "ManyToMany relationship intermediate type cannot be null");
-            Debug.Assert(currentEntityForeignKeyProperty != null,
-                         "ManyToMany relationship origin must have a foreign key defined in the intermediate type");
-            Debug.Assert(otherEntityForeignKeyProperty != null,
-                         "ManyToMany relationship destination must have a foreign key defined in the intermediate type");
-
             var tableMapping = conn.GetMapping(entityType);
+
+            Debug.Assert(enclosedType != EnclosedType.None, "ManyToMany relationship must be a List or Array");
+            Debug.Assert(currentEntityPrimaryKeyProperty != null, "ManyToMany relationship origin must have Primary Key");
+            Debug.Assert(otherEntityPrimaryKeyProperty != null, "ManyToMany relationship destination must have Primary Key");
+            Debug.Assert(intermediateType != null, "ManyToMany relationship intermediate type cannot be null");
+            Debug.Assert(currentEntityForeignKeyProperty != null, "ManyToMany relationship origin must have a foreign key defined in the intermediate type");
+            Debug.Assert(otherEntityForeignKeyProperty != null, "ManyToMany relationship destination must have a foreign key defined in the intermediate type");
             Debug.Assert(tableMapping != null, "There's no mapping table defined for ManyToMany relationship origin");
 
             IEnumerable values = null;
