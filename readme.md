@@ -45,6 +45,14 @@ Here's how we'll create, read and update the entities:
     
 Ok, maybe that was a horrible example, because one stock may have many valuations, so it's not a one-to-one, but you get the point.
 
+## Some action
+Probably *one-to-one* relationships aren't the reason that you are reading this, so let's prepare a more complete scenario using all the different kind of relationships:
+
+  
+    public class Student    {        [PrimaryKey, AutoIncrement]        public int StudentId { get; set; }            public string Name { get; set; }        public int Age { get; set; }            [ManyToMany(typeof(StudentsGroups))]        public List<Group> Groups { get; set; }            public int TutorId { get; set; }        [ManyToOne("TutorId")] // Foreign key may be specified in the relationship        public Teacher Tutor { get; set; }    }        public class Teacher    {        [PrimaryKey, AutoIncrement]        public int Id { get; set; }            public string Name { get; set; }            [OneToMany]        public List<Group> Groups { get; set; }            [OneToOne]        public Calendar Calendar { get; set; }    }        public class Subject    {        [PrimaryKey, AutoIncrement]        public int Id { get; set; }            public string SubjectName { get; set; }    }        public class Group    {        [PrimaryKey, AutoIncrement]        public int Id { get; set; }            public string GroupName { get; set; }            [ForeignKey(typeof(Teacher))]        public int TeacherId { get; set; }            [ManyToOne]        public Teacher Teacher { get; set; }            [ManyToMany(typeof(StudentsGroups))]        public List<Student> Students { get; set; }     }        public class Calendar    {        [PrimaryKey, AutoIncrement]        public int Id { get; set; }            [ForeignKey(typeof(Teacher))]        public int TeacherId { get; set; }            [OneToMany]        public List<Event> Events { get; set; }    }        public class Event    {        [PrimaryKey, AutoIncrement]        public int Id { get; set; }            public string Description { get; set; }        public string Notes { get; set; }        public DateTime Date { get; set; }            [ForeignKey(typeof(Calendar))]        public int CalendarId { get; set; }    }        public class StudentsGroups // Intermediate type required for many-to-many relationships    {        [ForeignKey(typeof(Student))]        public int StudentId { get; set; }            [ForeignKey(typeof(Group))]        public int GroupId { get; set; }    }
+
+Now try to imagine fetching and storing all these entities manually using **sqlite-net**...
+
 
 ## Limitations
 Because of the way SQLite-Net Extensions conception and implementation, it has some limitations:
