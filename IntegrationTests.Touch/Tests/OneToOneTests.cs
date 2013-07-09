@@ -275,7 +275,7 @@ namespace SQLiteNetExtensions.IntegrationTests
             var objectA = new O2OClassA();
             conn.Insert(objectA);
 
-            // Set the relationship using IDs
+            // Set the relationship using objects
             objectA.OneClassB = objectB;
             Assert.AreEqual(0, objectA.OneClassBKey);
 
@@ -290,7 +290,7 @@ namespace SQLiteNetExtensions.IntegrationTests
         }
 
         [Test]
-        public void TestUpdateUnSetOneToOneRelationship()
+        public void TestUpdateUnsetOneToOneRelationship()
         {
             var conn = new SQLiteConnection("database");
             conn.DropTable<O2OClassA>();
@@ -308,7 +308,7 @@ namespace SQLiteNetExtensions.IntegrationTests
             var objectA = new O2OClassA();
             conn.Insert(objectA);
 
-            // Set the relationship using IDs
+            // Set the relationship using objects
             objectA.OneClassB = objectB;
             Assert.AreEqual(0, objectA.OneClassBKey);
 
@@ -324,6 +324,110 @@ namespace SQLiteNetExtensions.IntegrationTests
             conn.UpdateWithChildren(objectA);
 
             Assert.AreEqual(0, objectA.OneClassBKey, "Foreign key hasn't been unset");
+        }
+
+        [Test]
+        public void TestUpdateSetOneToOneRelationshipWithInverse()
+        {
+            var conn = new SQLiteConnection("database");
+            conn.DropTable<O2OClassE>();
+            conn.DropTable<O2OClassF>();
+            conn.CreateTable<O2OClassE>();
+            conn.CreateTable<O2OClassF>();
+
+            // Use standard SQLite-Net API to create a new relationship
+            var objectF = new O2OClassF
+            {
+                Bar = string.Format("Bar String {0}", new Random().Next(100))
+            };
+            conn.Insert(objectF);
+
+            var objectE = new O2OClassE();
+            conn.Insert(objectE);
+
+            // Set the relationship using objects
+            objectE.ObjectF = objectF;
+            Assert.AreEqual(0, objectE.ObjectFKey);
+
+            conn.UpdateWithChildren(objectE);
+
+            Assert.AreEqual(objectF.Id, objectE.ObjectFKey, "Foreign key should have been refreshed");
+            Assert.AreSame(objectF, objectE.ObjectF, "Inverse relationship hasn't been set");
+
+            // Fetch the relationship
+            var newObjectA = conn.Get<O2OClassE>(objectE.Id);
+            Assert.AreEqual(objectF.Id, newObjectA.ObjectFKey, "Foreign key should have been refreshed in database");
+        }
+
+        [Test]
+        public void TestUpdateSetOneToOneRelationshipWithInverseForeignKey()
+        {
+            var conn = new SQLiteConnection("database");
+            conn.DropTable<O2OClassF>();
+            conn.DropTable<O2OClassE>();
+            conn.CreateTable<O2OClassF>();
+            conn.CreateTable<O2OClassE>();
+
+            // Use standard SQLite-Net API to create a new relationship
+            var objectF = new O2OClassF
+            {
+                Bar = string.Format("Bar String {0}", new Random().Next(100))
+            };
+            conn.Insert(objectF);
+
+            var objectE = new O2OClassE();
+            conn.Insert(objectE);
+
+            // Set the relationship using objects
+            objectF.ObjectE = objectE;
+            Assert.AreEqual(0, objectE.ObjectFKey);
+
+            conn.UpdateWithChildren(objectF);
+
+            Assert.AreEqual(objectF.Id, objectE.ObjectFKey, "Foreign key should have been refreshed");
+            Assert.AreSame(objectF, objectE.ObjectF, "Inverse relationship hasn't been set");
+
+            // Fetch the relationship
+            var newObjectA = conn.Get<O2OClassE>(objectE.Id);
+            Assert.AreEqual(objectF.Id, newObjectA.ObjectFKey, "Foreign key should have been refreshed in database");
+        }
+
+        [Test]
+        public void TestUpdateUnsetOneToOneRelationshipWithInverseForeignKey()
+        {
+            var conn = new SQLiteConnection("database");
+            conn.DropTable<O2OClassF>();
+            conn.DropTable<O2OClassE>();
+            conn.CreateTable<O2OClassF>();
+            conn.CreateTable<O2OClassE>();
+
+            // Use standard SQLite-Net API to create a new relationship
+            var objectF = new O2OClassF
+            {
+                Bar = string.Format("Bar String {0}", new Random().Next(100))
+            };
+            conn.Insert(objectF);
+
+            var objectE = new O2OClassE();
+            conn.Insert(objectE);
+
+            // Set the relationship using objects
+            objectF.ObjectE = objectE;
+            Assert.AreEqual(0, objectE.ObjectFKey);
+
+            conn.UpdateWithChildren(objectF);
+
+            Assert.AreEqual(objectF.Id, objectE.ObjectFKey, "Foreign key should have been refreshed");
+            Assert.AreSame(objectF, objectE.ObjectF, "Inverse relationship hasn't been set");
+
+            // At this point the test is the same as TestUpdateSetOneToOneRelationshipWithInverseForeignKey
+            objectF.ObjectE = null;     // Unset the relationship
+
+            conn.UpdateWithChildren(objectF);
+
+            // Fetch the relationship
+            var newObjectA = conn.Get<O2OClassE>(objectE.Id);
+            Assert.AreEqual(0, newObjectA.ObjectFKey, "Foreign key should have been refreshed in database");
         }
     }
 }
