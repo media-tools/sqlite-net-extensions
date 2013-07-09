@@ -34,7 +34,7 @@ Then you query like this:
 
 With SQLite-Net extensions, no more need to write the queries manually, just specify the relationships in the entities:
 
-    public class Stock    {        [PrimaryKey, AutoIncrement]        public int Id { get; set; }        [MaxLength(8)]        public string Symbol { get; set; }        [OneToOne]      // One to one relationship with Valuation        public Valuation Valuation { get; set; }    }    public class Valuation    {        [PrimaryKey, AutoIncrement]        public int Id { get; set; }        [ForeignKey(typeof(Stock))]     // Specify the foreign key        public int StockId { get; set; }        public DateTime Time { get; set; }        public decimal Price { get; set; }        [OneToOne]      // One to one relationship with Valuation        public Stock Stock { get; set; }    }
+    public class Stock    {        [PrimaryKey, AutoIncrement]        public int Id { get; set; }        [MaxLength(8)]        public string Symbol { get; set; }        [OneToOne]      // One to one relationship with Valuation        public Valuation Valuation { get; set; }    }    public class Valuation    {        [PrimaryKey, AutoIncrement]        public int Id { get; set; }        [ForeignKey(typeof(Stock))]     // Specify the foreign key        public int StockId { get; set; }        public DateTime Time { get; set; }        public decimal Price { get; set; }        [OneToOne]      // One to one relationship with Stock        public Stock Stock { get; set; }    }
 
 SQLite-Net Extensions will find all the properties with a relationship attribute and then find the foreign keys and inverse attributes for them.
 
