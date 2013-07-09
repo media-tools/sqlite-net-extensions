@@ -40,8 +40,9 @@
     <Compile Include="Attributes\OneToManyAttribute.cs" />
     <Compile Include="Attributes\OneToOneAttribute.cs" />
     <Compile Include="Attributes\RelationshipAttribute.cs" />
-    <Compile Include="Extensions\SQLiteExtension.cs" />
+    <Compile Include="Extensions\ReadOperations.cs" />
     <Compile Include="Extensions\ReflectionExtensions.cs" />
+    <Compile Include="Extensions\WriteOperations.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
