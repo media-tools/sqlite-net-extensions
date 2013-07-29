@@ -40,8 +40,12 @@
     <Compile Include="Attributes\OneToManyAttribute.cs" />
     <Compile Include="Attributes\OneToOneAttribute.cs" />
     <Compile Include="Attributes\RelationshipAttribute.cs" />
+    <Compile Include="Attributes\TextBlobAttribute.cs" />
     <Compile Include="Extensions\ReadOperations.cs" />
     <Compile Include="Extensions\ReflectionExtensions.cs" />
+    <Compile Include="Extensions\TextBlob\ITextBlobSerializer.cs" />
+    <Compile Include="Extensions\TextBlob\Serializers\JsonBlobSerializer.cs" />
+    <Compile Include="Extensions\TextBlob\TextBlobOperations.cs" />
     <Compile Include="Extensions\WriteOperations.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
@@ -58,7 +62,11 @@
     <Reference Include="Cirrious.MvvmCross.Plugins.Sqlite">
       <HintPath>..\packages\MvvmCross.HotTuna.Plugin.Sqlite.3.0.8.1\lib\portable-win+net45+MonoAndroid16+MonoTouch40+sl40+wp71\Cirrious.MvvmCross.Plugins.Sqlite.dll</HintPath>
     </Reference>
+    <Reference Include="Newtonsoft.Json">
+      <HintPath>..\packages\Newtonsoft.Json.5.0.6\lib\portable-net40+sl4+wp7+win8\Newtonsoft.Json.dll</HintPath>
+    </Reference>
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildExtensionsPath32)\Microsoft\Portable\$(TargetFrameworkVersion)\Microsoft.Portable.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
