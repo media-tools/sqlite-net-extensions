@@ -39,6 +39,9 @@
     <Reference Include="Cirrious.MvvmCross.Plugins.Sqlite">
       <HintPath>..\packages\MvvmCross.HotTuna.Plugin.Sqlite.3.0.8.1\lib\portable-win+net45+MonoAndroid16+MonoTouch40+sl40+wp71\Cirrious.MvvmCross.Plugins.Sqlite.dll</HintPath>
     </Reference>
+    <Reference Include="Moq">
+      <HintPath>..\packages\Moq.4.0.10827\lib\NET40\Moq.dll</HintPath>
+    </Reference>
     <Reference Include="nunit.framework">
       <HintPath>..\packages\NUnit.2.6.2\lib\nunit.framework.dll</HintPath>
     </Reference>
@@ -53,6 +56,7 @@
   <ItemGroup>
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="ReflectionExtensionsTests.cs" />
+    <Compile Include="TextBlobTests.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
