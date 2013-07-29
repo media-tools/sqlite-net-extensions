@@ -7,6 +7,7 @@ using System.Reflection;
 using SQLiteNetExtensions.Attributes;
 
 #if USING_MVVMCROSS
+using SQLiteNetExtensions.Extensions.TextBlob;
 using SQLiteConnection = Cirrious.MvvmCross.Plugins.Sqlite.ISQLiteConnection;
 #else
 using SQLite;
@@ -55,6 +56,10 @@ namespace SQLiteNetExtensions.Extensions
             else if (relationshipAttribute is ManyToManyAttribute)
             {
                 conn.GetManyToManyChildren(ref element, relationshipProperty);
+            }
+            else if (relationshipAttribute is TextBlobAttribute)
+            {
+                TextBlobOperations.GetTextBlobChild(ref element, relationshipProperty);
             }
         }
 

@@ -6,6 +6,7 @@ using System.Linq;
 using System.Reflection;
 using Cirrious.MvvmCross.Plugins.Sqlite;
 using SQLiteNetExtensions.Attributes;
+using SQLiteNetExtensions.Extensions.TextBlob;
 
 namespace SQLiteNetExtensions.Extensions
 {
@@ -47,6 +48,10 @@ namespace SQLiteNetExtensions.Extensions
                         }
                         foreignKeyProperty.SetValue(element, foreignKeyValue, null);
                     }
+                }
+                else if (relationshipAttribute is TextBlobAttribute)
+                {
+                    TextBlobOperations.UpdateTextBlobProperty(ref element, relationshipProperty);
                 }
             }
         }
