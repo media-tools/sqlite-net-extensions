@@ -1,6 +1,6 @@
 # SQLite-Net Extensions
 
-[SQLite-Net Extensions](https://bitbucket.org/twincoders/sqlite-net-extensions) is a very simple ORM that provides **one-to-one**, **one-to-many**, **many-to-one**, **many-to-many** and **inverse** relationships on top of the [sqlite-net library](https://github.com/praeclarum/sqlite-net).
+[SQLite-Net Extensions](https://bitbucket.org/twincoders/sqlite-net-extensions) is a very simple ORM that provides **one-to-one**, **one-to-many**, **many-to-one**, **many-to-many**, **inverse** and **text-blobbed** relationships on top of the [sqlite-net library](https://github.com/praeclarum/sqlite-net).
 
 sqlite-net is an open source, minimal library to allow .NET and Mono applications to store data in [SQLite 3 databases](http://www.sqlite.org). SQLite-Net Extensions extends its funcionality to help the user handle relationships between sqlite-net entities.
 
@@ -54,8 +54,93 @@ Probably *one-to-one* relationships aren't the reason that you are reading this,
 Now try to imagine fetching and storing all these entities manually using **sqlite-net**...
 
 
+## Features
+SQLite-Net extensions is built on top of [sqlite-net library](https://github.com/praeclarum/sqlite-net), so obviously all the [features of **sqlite-net**](https://github.com/praeclarum/sqlite-net/wiki) are present in it.
+
+If you don't know why a foreign key or an intermediate table is required at some point or what a relationship represents, take a look at [this article](http://www.onlamp.com/pub/a/onlamp/2001/03/20/aboutSQL.html) that explains pretty simple how relationships are stored in a database.
+
+### One to one
+The foreign key for a one-to-one relationship may be defined in any entity or even in **both** entities. In the latter case SQLite-Net extensions will automatically update inverse foreign keys when needed.
+
+The **inverse** relationship for a **one-to-one** property is also a **one-to-one** relationship. SQLite-Net extensions will automatically load one-to-one inverse relationships, because the object is already loaded into memory and it has no DB overhead.
+
+Example:
+
+    public class Passport    {        [PrimaryKey]        public string Identifier { get; set; }        public DateTime ExpirationDate { get; set; }    }    public class Person    {
+        [PrimaryKey, AutoIncrement]        public int Id { get; set; }                public string Name { get; set; }        [ForeignKey(typeof(Passport))]        public string PassportId { get; set; }        [OneToOne]        public Passport Passport { get; set; }    }
+
+### One to many
+The foreign key for a one-to-many relationship must be defined in the *many* end of the relationship.
+
+The **inverse** relationship for a **one-to-many** property is a **many-to-one** relationship. SQLite-Net extensions will automatically load one-to-many inverse relationships, because the object is already loaded into memory and it has no DB overhead.
+
+One-to-many relationships currently support `List` and `Array` of entities. They might be used indistinctly.
+
+Order of the elements is not guarranteed and should be considered as totally random. If sorting is required it should be performed after the elements are loaded.
+
+Example:
+
+    public class Bus    {        [PrimaryKey, AutoIncrement]        public int Id { get; set; }        public string PlateNumber { get; set; }        [OneToMany]        public List<Person> Passengers { get; set; }    }    public class Person    {        [PrimaryKey, AutoIncrement]        public int Id { get; set; }        public string Name { get; set; }        [ForeignKey(typeof(Bus))]        public int BusId { get; set; }    }
+
+### Many to one
+Many-to-one is the opposite to a one-to-many relationship. They represent exactly the same relationship seen from opposite entities. It can also be seen as a one-to-one relationship with no inverse restrictions.
+
+The foreign key for a many-to-one relationship must be defined in the *many* end of the relationship.
+
+The **inverse** relationship for a **many-to-one** property is a **one-to-many** relationship. SQLite-Net extensions will not automatically load many-to-one inverse relationships.
+
+Example:
+
+    public class Bus    {        [PrimaryKey, AutoIncrement]        public int Id { get; set; }        public string PlateNumber { get; set; }    }    public class Person    {        [PrimaryKey, AutoIncrement]        public int Id { get; set; }        public string Name { get; set; }        [ForeignKey(typeof(Bus))]        public int BusId { get; set; }        [ManyToOne]        public Bus Bus { get; set; }    }
+
+
+### Many to many
+Many-to-many relationships cannot be expressed using a foreign key in one of the entities, because foreign keys represent X-to-one relationships. Instead, an intermediate entity is required. This entity is never used directly in the application, but for clarity's shake, SQLite-Net Extensions will never create a table that the user hasn't defined explicitly.
+
+The foreign keys for a many-to-many relationship are thus declared in a intermediate entity.
+
+The **inverse** relationship for a **many-to-many** property is a **many-to-many** relationship. SQLite-Net extensions will not automatically load many-to-many inverse relationships.
+
+Example:
+
+    public class Student    {        [PrimaryKey, AutoIncrement]        public int Id { get; set; }        public string Name { get; set; }        [ManyToMany(typeof(StudentSubject))]        public List<Student> Students { get; set; }     }    public class Subject    {        [PrimaryKey, AutoIncrement]        public int Id { get; set; }        public string Description { get; set; }        [ManyToMany(typeof(StudentSubject))]        public List<Subject> Subjects { get; set; }     }    public class StudentSubject    {        [ForeignKey(typeof(Student))]        public int StudentId { get; set; }        [ForeignKey(typeof(Subject))]        public int SubjectId { get; set; }    }
+
+### Inverse relationships
+Inverse relationship are automatically discovered on runtime using reflection by matching the type of the origin entity with the type of the relationship of the opposite entity.
+
+You may also explicitly declare the inverse property in the relationship attribute. This is required when more than one relationship with the same type is declared.
+
+Example:
+
+    public class Bus    {        [PrimaryKey, AutoIncrement]        public int Id { get; set; }        public string PlateNumber { get; set; }        [OneToMany]        public List<Person> Passengers { get; set; }    }    public class Person    {        [PrimaryKey, AutoIncrement]        public int Id { get; set; }        public string Name { get; set; }        [ForeignKey(typeof(Bus))]        public int BusId { get; set; }        [ManyToOne]        public Bus Bus { get; set; }    }
+
+### Text blobbed properties
+Text-blobbed properties are serialized into a text property when saved and deserialized when loaded. This allows storing simple objects in the same table in a single column.
+
+Text-blobbed properties have a small overhead of serializing and deserializing the objects and some limitations, but are the best way to store simple objects like `List` or `Dictionary` of basic types or simple relationships.
+
+Text-blobbed properties require a declared `string` property where the serialized object is stored.
+
+The serializer used to store and load the elements can be customized by implementing the simple `ITextBlobSerializer` interface:
+
+    public interface ITextBlobSerializer    {        string Serialize(object element);        object Deserialize(string text, Type type);    }
+
+A JSON-based serializer is used if no other serializer has been specified using `TextBlobOperations.SetTextSerializer` method. To use the JSON serializer, a reference to [Newtonsoft Json.Net library](http://james.newtonking.com/projects/json-net.aspx) must be included in the project, also available as a [NuGet package](http://www.nuget.org/packages/newtonsoft.json/).
+
+Text-blobbed properties cannot have relationships to other objects nor inverse relationship to its parent.
+
+Example:
+
+    public class Address    {        public string StreetName { get; set; }        public string Number { get; set; }        public string PostalCode { get; set; }        public string Country { get; set; }    }    public class Person    {        public string Name { get; set; }        [TextBlob("PhonesBlobbed")]        public List<string> PhoneNumbers { get; set; }        [TextBlob("AddressesBlobbed")]        public List<Address> Addresses { get; set; }         public string PhonesBlobbed { get; set; } // serialized phone numbers        public string AddressesBlobbed { get; set; } // serialized addresses    }
+### Foreign keys
+Foreign keys for a relationship are discovered on runtime using reflection matching the type of the relationship with the type specified in the `ForeignKey` attribute. 
+
+You may also explicitly declare the foreign key in the relationship attribute. Explicitly declaring the foreign key is required when more than one relationship with the same type is declared.
+
+Foreign key must have the same type as the identifier of the entity that it's referencing.
+
 ## Limitations
-Because of the way SQLite-Net Extensions conception and implementation, it has some limitations:
+SQLite-Net it's not a fully featured ORM and because of its conception and implementation, it has some limitations:
 
 #### Only objects with ID can be used in a relationship
 If you use `[AutoIncrement]` in your *Primary Key* this also means that you need to insert the object in the database first to be assigned a primary key.
