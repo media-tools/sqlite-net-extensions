@@ -4,7 +4,11 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
-using Cirrious.MvvmCross.Plugins.Sqlite;
+#if USING_MVVMCROSS
+using SQLiteConnection = Cirrious.MvvmCross.Plugins.Sqlite.ISQLiteConnection;
+#else
+using SQLite;
+#endif
 using SQLiteNetExtensions.Attributes;
 using SQLiteNetExtensions.Extensions.TextBlob;
 
@@ -13,7 +17,7 @@ namespace SQLiteNetExtensions.Extensions
     public static class WriteOperations
     {
 
-        public static void UpdateWithChildren<T>(this ISQLiteConnection conn, T element)
+        public static void UpdateWithChildren<T>(this SQLiteConnection conn, T element)
         {
             // Update the current element
             RefreshForeignKeys(ref element);
@@ -57,7 +61,7 @@ namespace SQLiteNetExtensions.Extensions
         }
 
 
-        private static void UpdateInverseForeignKeys<T>(this ISQLiteConnection conn, T element)
+        private static void UpdateInverseForeignKeys<T>(this SQLiteConnection conn, T element)
         {
             foreach (var relationshipProperty in typeof(T).GetRelationshipProperties())
             {
@@ -77,7 +81,7 @@ namespace SQLiteNetExtensions.Extensions
             }
         }
             
-        private static void UpdateOneToManyInverseForeignKey<T>(this ISQLiteConnection conn, T element, PropertyInfo relationshipProperty)
+        private static void UpdateOneToManyInverseForeignKey<T>(this SQLiteConnection conn, T element, PropertyInfo relationshipProperty)
         {
             var type = typeof(T);
 
@@ -132,7 +136,7 @@ namespace SQLiteNetExtensions.Extensions
             conn.Execute(deleteQuery, keyValue);
         }
 
-        private static void UpdateOneToOneInverseForeignKey<T>(this ISQLiteConnection conn, T element, PropertyInfo relationshipProperty)
+        private static void UpdateOneToOneInverseForeignKey<T>(this SQLiteConnection conn, T element, PropertyInfo relationshipProperty)
         {
             var type = typeof(T);
 
@@ -193,7 +197,7 @@ namespace SQLiteNetExtensions.Extensions
             }
         }
 
-        private static void UpdateManyToManyForeignKeys<T>(this ISQLiteConnection conn, T element, PropertyInfo relationshipProperty)
+        private static void UpdateManyToManyForeignKeys<T>(this SQLiteConnection conn, T element, PropertyInfo relationshipProperty)
         {
             var type = typeof (T);
 

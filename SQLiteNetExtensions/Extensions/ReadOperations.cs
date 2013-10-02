@@ -5,9 +5,9 @@ using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
 using SQLiteNetExtensions.Attributes;
+using SQLiteNetExtensions.Extensions.TextBlob;
 
 #if USING_MVVMCROSS
-using SQLiteNetExtensions.Extensions.TextBlob;
 using SQLiteConnection = Cirrious.MvvmCross.Plugins.Sqlite.ISQLiteConnection;
 #else
 using SQLite;
