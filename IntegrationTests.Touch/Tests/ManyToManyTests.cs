@@ -80,7 +80,7 @@ namespace SQLiteNetExtensions.IntegrationTests
             //          3       -       1, 2, 3
             //          4       -       1, 2, 3, 4
 
-            var conn = new SQLiteConnection("database");
+            var conn = new SQLiteConnection(Utils.DatabaseFilePath);
             conn.DropTable<M2MClassA>();
             conn.DropTable<M2MClassB>();
             conn.DropTable<ClassAClassB>();
@@ -185,7 +185,7 @@ namespace SQLiteNetExtensions.IntegrationTests
             //          3       -       1, 2, 3
             //          4       -       1, 2, 3, 4
 
-            var conn = new SQLiteConnection("database");
+            var conn = new SQLiteConnection(Utils.DatabaseFilePath);
             conn.DropTable<M2MClassC>();
             conn.DropTable<M2MClassD>();
             conn.DropTable<ClassCClassD>();
@@ -290,7 +290,7 @@ namespace SQLiteNetExtensions.IntegrationTests
             //          3       -       1, 2, 3
             //          4       -       1, 2, 3, 4
 
-            var conn = new SQLiteConnection("database");
+            var conn = new SQLiteConnection(Utils.DatabaseFilePath);
             conn.DropTable<M2MClassA>();
             conn.DropTable<M2MClassB>();
             conn.DropTable<ClassAClassB>();
@@ -391,7 +391,7 @@ namespace SQLiteNetExtensions.IntegrationTests
             //          4       -       3, 4
 
 
-            var conn = new SQLiteConnection("database");
+            var conn = new SQLiteConnection(Utils.DatabaseFilePath);
             conn.DropTable<M2MClassA>();
             conn.DropTable<M2MClassB>();
             conn.DropTable<ClassAClassB>();

@@ -85,7 +85,7 @@ namespace SQLiteNetExtensions.IntegrationTests
         [Test]
         public void TestGetOneToManyList()
         {
-            var conn = new SQLiteConnection("database");
+            var conn = new SQLiteConnection(Utils.DatabaseFilePath);
             conn.DropTable<O2MClassA>();
             conn.DropTable<O2MClassB>();
             conn.CreateTable<O2MClassA>();
@@ -144,7 +144,7 @@ namespace SQLiteNetExtensions.IntegrationTests
         [Test]
         public void TestGetOneToManyListWithInverse()
         {
-            var conn = new SQLiteConnection("database");
+            var conn = new SQLiteConnection(Utils.DatabaseFilePath);
             conn.DropTable<O2MClassC>();
             conn.DropTable<O2MClassD>();
             conn.CreateTable<O2MClassC>();
@@ -206,7 +206,7 @@ namespace SQLiteNetExtensions.IntegrationTests
         [Test]
         public void TestGetOneToManyArray()
         {
-            var conn = new SQLiteConnection("database");
+            var conn = new SQLiteConnection(Utils.DatabaseFilePath);
             conn.DropTable<O2MClassE>();
             conn.DropTable<O2MClassF>();
             conn.CreateTable<O2MClassE>();
@@ -265,7 +265,7 @@ namespace SQLiteNetExtensions.IntegrationTests
         [Test]
         public void TestUpdateSetOneToManyList()
         {
-            var conn = new SQLiteConnection("database");
+            var conn = new SQLiteConnection(Utils.DatabaseFilePath);
             conn.DropTable<O2MClassA>();
             conn.DropTable<O2MClassB>();
             conn.CreateTable<O2MClassA>();
@@ -318,7 +318,7 @@ namespace SQLiteNetExtensions.IntegrationTests
         [Test]
         public void TestUpdateUnsetOneToManyEmptyList()
         {
-            var conn = new SQLiteConnection("database");
+            var conn = new SQLiteConnection(Utils.DatabaseFilePath);
             conn.DropTable<O2MClassA>();
             conn.DropTable<O2MClassB>();
             conn.CreateTable<O2MClassA>();
@@ -382,7 +382,7 @@ namespace SQLiteNetExtensions.IntegrationTests
         [Test]
         public void TestUpdateUnsetOneToManyNullList()
         {
-            var conn = new SQLiteConnection("database");
+            var conn = new SQLiteConnection(Utils.DatabaseFilePath);
             conn.DropTable<O2MClassA>();
             conn.DropTable<O2MClassB>();
             conn.CreateTable<O2MClassA>();
@@ -446,7 +446,7 @@ namespace SQLiteNetExtensions.IntegrationTests
         [Test]
         public void TestUpdateSetOneToManyArray()
         {
-            var conn = new SQLiteConnection("database");
+            var conn = new SQLiteConnection(Utils.DatabaseFilePath);
             conn.DropTable<O2MClassE>();
             conn.DropTable<O2MClassF>();
             conn.CreateTable<O2MClassE>();
@@ -500,7 +500,7 @@ namespace SQLiteNetExtensions.IntegrationTests
         [Test]
         public void TestUpdateSetOneToManyListWithInverse()
         {
-            var conn = new SQLiteConnection("database");
+            var conn = new SQLiteConnection(Utils.DatabaseFilePath);
             conn.DropTable<O2MClassC>();
             conn.DropTable<O2MClassD>();
             conn.CreateTable<O2MClassC>();

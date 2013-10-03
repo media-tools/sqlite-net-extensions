@@ -86,7 +86,7 @@ namespace SQLiteNetExtensions.IntegrationTests
         [Test]
         public void TestGetOneToOneDirect()
         {
-            var conn = new SQLiteConnection("database");
+            var conn = new SQLiteConnection(Utils.DatabaseFilePath);
             conn.DropTable<O2OClassA>();
             conn.DropTable<O2OClassB>();
             conn.CreateTable<O2OClassA>();
@@ -125,7 +125,7 @@ namespace SQLiteNetExtensions.IntegrationTests
         [Test]
         public void TestGetOneToOneInverseForeignKey()
         {
-            var conn = new SQLiteConnection("database");
+            var conn = new SQLiteConnection(Utils.DatabaseFilePath);
             conn.DropTable<O2OClassC>();
             conn.DropTable<O2OClassD>();
             conn.CreateTable<O2OClassC>();
@@ -165,7 +165,7 @@ namespace SQLiteNetExtensions.IntegrationTests
         [Test]
         public void TestGetOneToOneWithInverseRelationship()
         {
-            var conn = new SQLiteConnection("database");
+            var conn = new SQLiteConnection(Utils.DatabaseFilePath);
             conn.DropTable<O2OClassE>();
             conn.DropTable<O2OClassF>();
             conn.CreateTable<O2OClassE>();
@@ -212,7 +212,7 @@ namespace SQLiteNetExtensions.IntegrationTests
         [Test]
         public void TestGetInverseOneToOneRelationshipWithExplicitKey()
         {
-            var conn = new SQLiteConnection("database");
+            var conn = new SQLiteConnection(Utils.DatabaseFilePath);
             conn.DropTable<O2OClassE>();
             conn.DropTable<O2OClassF>();
             conn.CreateTable<O2OClassE>();
@@ -259,7 +259,7 @@ namespace SQLiteNetExtensions.IntegrationTests
         [Test]
         public void TestUpdateSetOneToOneRelationship()
         {
-            var conn = new SQLiteConnection("database");
+            var conn = new SQLiteConnection(Utils.DatabaseFilePath);
             conn.DropTable<O2OClassA>();
             conn.DropTable<O2OClassB>();
             conn.CreateTable<O2OClassA>();
@@ -292,7 +292,7 @@ namespace SQLiteNetExtensions.IntegrationTests
         [Test]
         public void TestUpdateUnsetOneToOneRelationship()
         {
-            var conn = new SQLiteConnection("database");
+            var conn = new SQLiteConnection(Utils.DatabaseFilePath);
             conn.DropTable<O2OClassA>();
             conn.DropTable<O2OClassB>();
             conn.CreateTable<O2OClassA>();
@@ -329,7 +329,7 @@ namespace SQLiteNetExtensions.IntegrationTests
         [Test]
         public void TestUpdateSetOneToOneRelationshipWithInverse()
         {
-            var conn = new SQLiteConnection("database");
+            var conn = new SQLiteConnection(Utils.DatabaseFilePath);
             conn.DropTable<O2OClassE>();
             conn.DropTable<O2OClassF>();
             conn.CreateTable<O2OClassE>();
@@ -362,7 +362,7 @@ namespace SQLiteNetExtensions.IntegrationTests
         [Test]
         public void TestUpdateSetOneToOneRelationshipWithInverseForeignKey()
         {
-            var conn = new SQLiteConnection("database");
+            var conn = new SQLiteConnection(Utils.DatabaseFilePath);
             conn.DropTable<O2OClassF>();
             conn.DropTable<O2OClassE>();
             conn.CreateTable<O2OClassF>();
@@ -395,7 +395,7 @@ namespace SQLiteNetExtensions.IntegrationTests
         [Test]
         public void TestUpdateUnsetOneToOneRelationshipWithInverseForeignKey()
         {
-            var conn = new SQLiteConnection("database");
+            var conn = new SQLiteConnection(Utils.DatabaseFilePath);
             conn.DropTable<O2OClassF>();
             conn.DropTable<O2OClassE>();
             conn.CreateTable<O2OClassF>();

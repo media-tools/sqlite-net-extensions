@@ -38,7 +38,7 @@ namespace SQLiteNetExtensions.IntegrationTests
         [Test]
         public void TestGetManyToOne()
         {
-            var conn = new SQLiteConnection("database");
+            var conn = new SQLiteConnection(Utils.DatabaseFilePath);
             conn.DropTable<M2OClassA>();
             conn.DropTable<M2OClassB>();
             conn.CreateTable<M2OClassA>();
@@ -76,7 +76,7 @@ namespace SQLiteNetExtensions.IntegrationTests
         [Test]
         public void TestUpdateSetManyToOne()
         {
-            var conn = new SQLiteConnection("database");
+            var conn = new SQLiteConnection(Utils.DatabaseFilePath);
             conn.DropTable<M2OClassA>();
             conn.DropTable<M2OClassB>();
             conn.CreateTable<M2OClassA>();
@@ -109,7 +109,7 @@ namespace SQLiteNetExtensions.IntegrationTests
         [Test]
         public void TestUpdateUnsetManyToOne()
         {
-            var conn = new SQLiteConnection("database");
+            var conn = new SQLiteConnection(Utils.DatabaseFilePath);
             conn.DropTable<M2OClassA>();
             conn.DropTable<M2OClassB>();
             conn.CreateTable<M2OClassA>();

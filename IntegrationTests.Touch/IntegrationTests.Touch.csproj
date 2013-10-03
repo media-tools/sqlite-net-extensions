@@ -84,10 +84,11 @@
     <None Include="Info.plist" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <None Include="packages.config" />
+    <Compile Include="Tests\Utils.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\SQLiteNetExtensions\SQLiteNetExtensions.csproj">
-      <Project>{f723017d-ede5-49cc-a84f-881c067c6004}</Project>
+      <Project>{F723017D-EDE5-49CC-A84F-881C067C6004}</Project>
       <Name>SQLiteNetExtensions</Name>
     </ProjectReference>
   </ItemGroup>
@@ -118,13 +119,12 @@
     <Reference Include="System.Xml.Serialization">
       <HintPath>..\packages\MvvmCross.PortableSupport.3.0.8.1\lib\MonoTouch40\System.Xml.Serialization.dll</HintPath>
     </Reference>
+    <Reference Include="System.Net">
+      <HintPath>..\packages\MvvmCross.PortableSupport.3.0.8.1\lib\MonoTouch40\System.Net.dll</HintPath>
+    </Reference>
   </ItemGroup>
   <ItemGroup>
     <Reference Include="System" />
-    <Reference Include="System.Net, Version=2.0.5.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\packages\MvvmCross.PortableSupport.3.0.8.1\lib\MonoTouch40\System.Net.dll</HintPath>
-    </Reference>
     <Reference Include="System.Windows">
       <HintPath>..\packages\MvvmCross.PortableSupport.3.0.8.1\lib\MonoTouch40\System.Windows.dll</HintPath>
     </Reference>
