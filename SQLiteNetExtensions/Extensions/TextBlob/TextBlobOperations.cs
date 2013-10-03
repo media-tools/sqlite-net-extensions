@@ -1,8 +1,8 @@
-﻿#if USING_MVVMCROSS
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using System.Reflection;
 using SQLiteNetExtensions.Attributes;
 using SQLiteNetExtensions.Extensions.TextBlob.Serializers;
+#if USING_MVVMCROSS
 using SQLiteConnection = Cirrious.MvvmCross.Plugins.Sqlite.ISQLiteConnection;
 #else
 using SQLite;
