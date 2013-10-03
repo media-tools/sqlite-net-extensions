@@ -10,7 +10,7 @@
     <OutputType>Exe</OutputType>
     <RootNamespace>IntegrationTests.Touch</RootNamespace>
     <IPhoneResourcePrefix>Resources</IPhoneResourcePrefix>
-    <AssemblyName>IntegrationTests.Touch</AssemblyName>
+    <AssemblyName>IntegrationTestsTouch</AssemblyName>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|iPhoneSimulator' ">
     <DebugSymbols>true</DebugSymbols>
