@@ -1,13 +1,9 @@
 ﻿using System;
-using Cirrious.MvvmCross.Plugins.Sqlite;
 using NUnit.Framework;
-using SQLite;
 using SQLiteNetExtensions.Attributes;
 using SQLiteNetExtensions.Extensions;
-
-#if USING_MVVMCROSS
-using Cirrious.MvvmCross.Plugins.Sqlite;
-#endif
+using Cirrious.MvvmCross.Community.Plugins.Sqlite;
+using Community.SQLite;
 
 namespace SQLiteNetExtensions.IntegrationTests
 {

@@ -74,7 +74,7 @@
     <CodesignKey>iPhone Distribution</CodesignKey>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="Bootstrap\SqlitePluginBootstrap.cs" />
+    <Compile Include="Bootstrap\CommunitySqlitePluginBootstrap.cs" />
     <Compile Include="Main.cs" />
     <Compile Include="AppDelegate.cs" />
     <Compile Include="Tests\ManyToManyTests.cs" />
@@ -94,40 +94,31 @@
   </ItemGroup>
   <ItemGroup>
     <Reference Include="Cirrious.CrossCore">
-      <HintPath>..\packages\MvvmCross.HotTuna.CrossCore.3.0.8.1\lib\MonoTouch40\Cirrious.CrossCore.dll</HintPath>
+      <HintPath>..\packages\MvvmCross.HotTuna.CrossCore.3.0.14\lib\MonoTouch\Cirrious.CrossCore.dll</HintPath>
     </Reference>
     <Reference Include="Cirrious.CrossCore.Touch">
-      <HintPath>..\packages\MvvmCross.HotTuna.CrossCore.3.0.8.1\lib\MonoTouch40\Cirrious.CrossCore.Touch.dll</HintPath>
+      <HintPath>..\packages\MvvmCross.HotTuna.CrossCore.3.0.14\lib\MonoTouch\Cirrious.CrossCore.Touch.dll</HintPath>
     </Reference>
     <Reference Include="Cirrious.MvvmCross.Binding">
-      <HintPath>..\packages\MvvmCross.HotTuna.CrossCore.3.0.8.1\lib\MonoTouch40\Cirrious.MvvmCross.Binding.dll</HintPath>
+      <HintPath>..\packages\MvvmCross.HotTuna.CrossCore.3.0.14\lib\MonoTouch\Cirrious.MvvmCross.Binding.dll</HintPath>
     </Reference>
     <Reference Include="Cirrious.MvvmCross.Binding.Touch">
-      <HintPath>..\packages\MvvmCross.HotTuna.CrossCore.3.0.8.1\lib\MonoTouch40\Cirrious.MvvmCross.Binding.Touch.dll</HintPath>
+      <HintPath>..\packages\MvvmCross.HotTuna.CrossCore.3.0.14\lib\MonoTouch\Cirrious.MvvmCross.Binding.Touch.dll</HintPath>
+    </Reference>
+    <Reference Include="Cirrious.MvvmCross.Community.Plugins.Sqlite">
+      <HintPath>..\packages\MvvmCross.Community.Plugin.Sqlite.3.0.13\lib\MonoTouch40\Cirrious.MvvmCross.Community.Plugins.Sqlite.dll</HintPath>
+    </Reference>
+    <Reference Include="Cirrious.MvvmCross.Community.Plugins.Sqlite.Touch">
+      <HintPath>..\packages\MvvmCross.Community.Plugin.Sqlite.3.0.13\lib\MonoTouch40\Cirrious.MvvmCross.Community.Plugins.Sqlite.Touch.dll</HintPath>
     </Reference>
     <Reference Include="Cirrious.MvvmCross.Localization">
-      <HintPath>..\packages\MvvmCross.HotTuna.CrossCore.3.0.8.1\lib\MonoTouch40\Cirrious.MvvmCross.Localization.dll</HintPath>
-    </Reference>
-    <Reference Include="Cirrious.MvvmCross.Plugins.Sqlite">
-      <HintPath>..\packages\MvvmCross.HotTuna.Plugin.Sqlite.3.0.8.1\lib\MonoTouch40\Cirrious.MvvmCross.Plugins.Sqlite.dll</HintPath>
-    </Reference>
-    <Reference Include="Cirrious.MvvmCross.Plugins.Sqlite.Touch">
-      <HintPath>..\packages\MvvmCross.HotTuna.Plugin.Sqlite.3.0.8.1\lib\MonoTouch40\Cirrious.MvvmCross.Plugins.Sqlite.Touch.dll</HintPath>
+      <HintPath>..\packages\MvvmCross.HotTuna.CrossCore.3.0.14\lib\MonoTouch\Cirrious.MvvmCross.Localization.dll</HintPath>
     </Reference>
     <Reference Include="monotouch" />
     <Reference Include="MonoTouch.NUnitLite" />
-    <Reference Include="System.Xml.Serialization">
-      <HintPath>..\packages\MvvmCross.PortableSupport.3.0.8.1\lib\MonoTouch40\System.Xml.Serialization.dll</HintPath>
-    </Reference>
-    <Reference Include="System.Net">
-      <HintPath>..\packages\MvvmCross.PortableSupport.3.0.8.1\lib\MonoTouch40\System.Net.dll</HintPath>
-    </Reference>
   </ItemGroup>
   <ItemGroup>
     <Reference Include="System" />
-    <Reference Include="System.Windows">
-      <HintPath>..\packages\MvvmCross.PortableSupport.3.0.8.1\lib\MonoTouch40\System.Windows.dll</HintPath>
-    </Reference>
     <Reference Include="System.Xml" />
     <Reference Include="System.Core" />
   </ItemGroup>

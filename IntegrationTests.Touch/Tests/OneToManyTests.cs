@@ -1,12 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using Cirrious.MvvmCross.Plugins.Sqlite;
 using NUnit.Framework;
-using SQLite;
 using SQLiteNetExtensions.Attributes;
 using SQLiteNetExtensions.Extensions;
+using Cirrious.MvvmCross.Community.Plugins.Sqlite;
+using Community.SQLite;
 
 namespace SQLiteNetExtensions.IntegrationTests
 {

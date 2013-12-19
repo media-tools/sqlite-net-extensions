@@ -1,7 +1,7 @@
 ﻿using System;
 
 #if USING_MVVMCROSS
-using Cirrious.MvvmCross.Plugins.Sqlite;
+using Cirrious.MvvmCross.Community.Plugins.Sqlite;
 #else
 using SQLite;
 #endif

@@ -2,3 +2,6 @@
 **/obj
 *.suo
 *.DotSettings.user
+*.userprefs
+packages/*
+!packages/repositories.config

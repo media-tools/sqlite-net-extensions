@@ -8,7 +8,7 @@ using SQLiteNetExtensions.Attributes;
 using SQLiteNetExtensions.Extensions.TextBlob;
 
 #if USING_MVVMCROSS
-using SQLiteConnection = Cirrious.MvvmCross.Plugins.Sqlite.ISQLiteConnection;
+using SQLiteConnection = Cirrious.MvvmCross.Community.Plugins.Sqlite.ISQLiteConnection;
 #else
 using SQLite;
 #endif
