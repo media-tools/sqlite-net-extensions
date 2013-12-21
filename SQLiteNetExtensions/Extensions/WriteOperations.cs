@@ -20,14 +20,14 @@ namespace SQLiteNetExtensions.Extensions
         public static void UpdateWithChildren<T>(this SQLiteConnection conn, T element)
         {
             // Update the current element
-            RefreshForeignKeys(ref element);
+            RefreshForeignKeys(element);
             conn.Update(element);
 
             // Update inverse foreign keys
             conn.UpdateInverseForeignKeys(element);
         }
 
-        private static void RefreshForeignKeys<T>(ref T element)
+        private static void RefreshForeignKeys<T>(T element)
         {
             var type = typeof (T);
             foreach (var relationshipProperty in type.GetRelationshipProperties())
@@ -55,7 +55,7 @@ namespace SQLiteNetExtensions.Extensions
                 }
                 else if (relationshipAttribute is TextBlobAttribute)
                 {
-                    TextBlobOperations.UpdateTextBlobProperty(ref element, relationshipProperty);
+                    TextBlobOperations.UpdateTextBlobProperty(element, relationshipProperty);
                 }
             }
         }

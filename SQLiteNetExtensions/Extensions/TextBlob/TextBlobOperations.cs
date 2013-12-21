@@ -26,7 +26,7 @@ namespace SQLiteNetExtensions.Extensions.TextBlob
             return _serializer ?? (_serializer = new JsonBlobSerializer());
         }
 
-        public static void GetTextBlobChild<T>(ref T element, PropertyInfo relationshipProperty)
+        public static void GetTextBlobChild<T>(T element, PropertyInfo relationshipProperty)
         {
             var type = typeof(T);
             var relationshipType = relationshipProperty.PropertyType;
@@ -43,7 +43,7 @@ namespace SQLiteNetExtensions.Extensions.TextBlob
             relationshipProperty.SetValue(element, value, null);
         }
 
-        public static void UpdateTextBlobProperty<T>(ref T element, PropertyInfo relationshipProperty)
+        public static void UpdateTextBlobProperty<T>(T element, PropertyInfo relationshipProperty)
         {
             var type = typeof(T);
             var relationshipType = relationshipProperty.PropertyType;

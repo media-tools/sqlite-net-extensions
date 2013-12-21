@@ -114,7 +114,7 @@ namespace SQLiteNetExtensions.IntegrationTests
             Assert.Null(objectA.BObjects);
 
             // Fetch (yet empty) the relationship
-            conn.GetChildren(ref objectA);
+            conn.GetChildren(objectA);
             Assert.NotNull(objectA.BObjects);
             Assert.AreEqual(0, objectA.BObjects.Count);
 
@@ -129,7 +129,7 @@ namespace SQLiteNetExtensions.IntegrationTests
             Assert.AreEqual(0, objectA.BObjects.Count);
 
             // Fetch the relationship
-            conn.GetChildren(ref objectA);
+            conn.GetChildren(objectA);
 
             Assert.NotNull(objectA.BObjects);
             Assert.AreEqual(objectsB.Count, objectA.BObjects.Count);
@@ -173,7 +173,7 @@ namespace SQLiteNetExtensions.IntegrationTests
             Assert.Null(objectC.DObjects);
 
             // Fetch (yet empty) the relationship
-            conn.GetChildren(ref objectC);
+            conn.GetChildren(objectC);
             Assert.NotNull(objectC.DObjects);
             Assert.AreEqual(0, objectC.DObjects.Count);
 
@@ -188,7 +188,7 @@ namespace SQLiteNetExtensions.IntegrationTests
             Assert.AreEqual(0, objectC.DObjects.Count);
 
             // Fetch the relationship
-            conn.GetChildren(ref objectC);
+            conn.GetChildren(objectC);
 
             Assert.NotNull(objectC.DObjects);
             Assert.AreEqual(objectsD.Count, objectC.DObjects.Count);
@@ -235,7 +235,7 @@ namespace SQLiteNetExtensions.IntegrationTests
             Assert.Null(objectE.FObjects);
 
             // Fetch (yet empty) the relationship
-            conn.GetChildren(ref objectE);
+            conn.GetChildren(objectE);
             Assert.NotNull(objectE.FObjects);
             Assert.AreEqual(0, objectE.FObjects.Length);
 
@@ -250,7 +250,7 @@ namespace SQLiteNetExtensions.IntegrationTests
             Assert.AreEqual(0, objectE.FObjects.Length);
 
             // Fetch the relationship
-            conn.GetChildren(ref objectE);
+            conn.GetChildren(objectE);
 
             Assert.NotNull(objectE.FObjects);
             Assert.AreEqual(objectsF.Length, objectE.FObjects.Length);

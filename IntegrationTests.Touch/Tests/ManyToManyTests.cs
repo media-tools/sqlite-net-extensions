@@ -129,7 +129,7 @@ namespace SQLiteNetExtensions.IntegrationTests
                 Assert.Null(objectA.BObjects);
 
                 // Fetch (yet empty) the relationship
-                conn.GetChildren(ref copyA);
+                conn.GetChildren(copyA);
 
                 Assert.NotNull(copyA.BObjects);
                 Assert.AreEqual(0, copyA.BObjects.Count);
@@ -159,7 +159,7 @@ namespace SQLiteNetExtensions.IntegrationTests
                 Assert.AreEqual(0, objectA.BObjects.Count);
 
                 // Fetch the relationship
-                conn.GetChildren(ref objectA);
+                conn.GetChildren(objectA);
 
                 var childrenCount = i + 1;
 
@@ -234,7 +234,7 @@ namespace SQLiteNetExtensions.IntegrationTests
                 Assert.Null(objectC.DObjects);
 
                 // Fetch (yet empty) the relationship
-                conn.GetChildren(ref copyC);
+                conn.GetChildren(copyC);
 
                 Assert.NotNull(copyC.DObjects);
                 Assert.AreEqual(0, copyC.DObjects.Length);
@@ -264,7 +264,7 @@ namespace SQLiteNetExtensions.IntegrationTests
                 Assert.AreEqual(0, objectC.DObjects.Length);
 
                 // Fetch the relationship
-                conn.GetChildren(ref objectC);
+                conn.GetChildren(objectC);
 
                 var childrenCount = i + 1;
 

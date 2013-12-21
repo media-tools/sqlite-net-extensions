@@ -53,7 +53,7 @@ namespace SQLiteNetExtensions.IntegrationTests
             Assert.Null(objectA.OneClassB);
 
             // Fetch (yet empty) the relationship
-            conn.GetChildren(ref objectA);
+            conn.GetChildren(objectA);
             Assert.Null(objectA.OneClassB);
 
             // Set the relationship using IDs
@@ -62,7 +62,7 @@ namespace SQLiteNetExtensions.IntegrationTests
             Assert.Null(objectA.OneClassB);
 
             // Fetch the relationship
-            conn.GetChildren(ref objectA);
+            conn.GetChildren(objectA);
 
             Assert.NotNull(objectA.OneClassB);
             Assert.AreEqual(objectB.Id, objectA.OneClassB.Id);
