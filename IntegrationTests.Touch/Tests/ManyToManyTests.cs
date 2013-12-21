@@ -67,6 +67,32 @@ namespace SQLiteNetExtensions.IntegrationTests
             public int ClassDId { get; set; }
         }
 
+        public class M2MClassE
+        {
+            [PrimaryKey]
+            public Guid Id { get; set; } // Guid identifier instead of int
+
+            [ManyToMany(typeof(ClassEClassF), inverseForeignKey:"ClassEId")]   // Foreign key specified in ManyToMany attribute
+            public M2MClassF[] FObjects { get; set; } // Array instead of List
+
+            public string Bar { get; set; }
+        }
+
+        public class M2MClassF
+        {
+            [PrimaryKey, AutoIncrement]
+            public int Id { get; set; }
+
+            public string Foo { get; set; }
+        }
+
+        public class ClassEClassF
+        {
+            public Guid ClassEId { get; set; }   // ForeignKey attribute not needed, already specified in the ManyToMany relationship
+            [ForeignKey(typeof(M2MClassF))]
+            public int ClassFId { get; set; }
+        }
+
 
         [Test]
         public void TestGetManyToManyList()
@@ -176,7 +202,7 @@ namespace SQLiteNetExtensions.IntegrationTests
         [Test]
         public void TestGetManyToManyArray()
         {
-            // In this test we will create a N:M relationship between objects of ClassA and ClassB
+            // In this test we will create a N:M relationship between objects of ClassC and ClassD
             //      Class C     -       Class D
             // --------------------------------------
             //          1       -       1
@@ -492,6 +518,115 @@ namespace SQLiteNetExtensions.IntegrationTests
                 foreach (var objectBKey in storedChildKeyList)
                 {
                     Assert.IsTrue(expectedChildIds.Contains(objectBKey), "Relationship ID is not correct");
+                }
+            }
+        }
+
+        [Test]
+        public void TestGetManyToManyGuidIdentifier()
+        {
+            // In this test we will create a N:M relationship between objects of ClassE and ClassF
+            //      Class E     -       Class F
+            // --------------------------------------
+            //          1       -       1
+            //          2       -       1, 2
+            //          3       -       1, 2, 3
+            //          4       -       1, 2, 3, 4
+
+            var conn = new SQLiteConnection(Utils.DatabaseFilePath);
+            conn.DropTable<M2MClassE>();
+            conn.DropTable<M2MClassF>();
+            conn.DropTable<ClassEClassF>();
+            conn.CreateTable<M2MClassE>();
+            conn.CreateTable<M2MClassF>();
+            conn.CreateTable<ClassEClassF>();
+
+            // Use standard SQLite-Net API to create the objects
+            var objectsF = new List<M2MClassF>
+            {
+                new M2MClassF {
+                    Foo = string.Format("1- Foo String {0}", new Random().Next(100))
+                },
+                new M2MClassF {
+                    Foo = string.Format("2- Foo String {0}", new Random().Next(100))
+                },
+                new M2MClassF {
+                    Foo = string.Format("3- Foo String {0}", new Random().Next(100))
+                },
+                new M2MClassF {
+                    Foo = string.Format("4- Foo String {0}", new Random().Next(100))
+                }
+            };
+            conn.InsertAll(objectsF);
+
+            var objectsE = new List<M2MClassE>
+            {
+                new M2MClassE {
+                    Id = Guid.NewGuid(),
+                    Bar = string.Format("1- Bar String {0}", new Random().Next(100))
+                },
+                new M2MClassE {
+                    Id = Guid.NewGuid(),
+                    Bar = string.Format("2- Bar String {0}", new Random().Next(100))
+                },
+                new M2MClassE {
+                    Id = Guid.NewGuid(),
+                    Bar = string.Format("3- Bar String {0}", new Random().Next(100))
+                },
+                new M2MClassE {
+                    Id = Guid.NewGuid(),
+                    Bar = string.Format("4- Bar String {0}", new Random().Next(100))
+                }
+            };
+
+            conn.InsertAll(objectsE);
+
+            foreach (var objectE in objectsE)
+            {
+                var copyE = objectE;
+                Assert.Null(objectE.FObjects);
+
+                // Fetch (yet empty) the relationship
+                conn.GetChildren(copyE);
+
+                Assert.NotNull(copyE.FObjects);
+                Assert.AreEqual(0, copyE.FObjects.Length);
+            }
+
+
+            // Create the relationships in the intermediate table
+            for (var eIndex = 0; eIndex < objectsE.Count; eIndex++)
+            {
+                for (var fIndex = 0; fIndex <= eIndex; fIndex++)
+                {
+                    conn.Insert(new ClassEClassF
+                        {
+                            ClassEId = objectsE[eIndex].Id,
+                            ClassFId = objectsF[fIndex].Id
+                        });
+                }
+            }
+
+
+            for (var i = 0; i < objectsE.Count; i++)
+            {
+                var objectE = objectsE[i];
+
+                // Relationship still empty because hasn't been refreshed
+                Assert.NotNull(objectE.FObjects);
+                Assert.AreEqual(0, objectE.FObjects.Length);
+
+                // Fetch the relationship
+                conn.GetChildren(objectE);
+
+                var childrenCount = i + 1;
+
+                Assert.NotNull(objectE.FObjects);
+                Assert.AreEqual(childrenCount, objectE.FObjects.Length);
+                var foos = objectsF.GetRange(0, childrenCount).Select(objectB => objectB.Foo).ToList();
+                foreach (var objectD in objectE.FObjects)
+                {
+                    Assert.IsTrue(foos.Contains(objectD.Foo));
                 }
             }
         }
