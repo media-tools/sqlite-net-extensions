@@ -20,14 +20,14 @@ namespace SQLiteNetExtensions.Extensions
         public static void UpdateWithChildren<T>(this SQLiteConnection conn, T element)
         {
             // Update the current element
-            RefreshForeignKeys(ref element);
+            RefreshForeignKeys(element);
             conn.Update(element);
 
             // Update inverse foreign keys
             conn.UpdateInverseForeignKeys(element);
         }
 
-        private static void RefreshForeignKeys<T>(ref T element)
+        private static void RefreshForeignKeys<T>(T element)
         {
             var type = typeof (T);
             foreach (var relationshipProperty in type.GetRelationshipProperties())
@@ -55,7 +55,7 @@ namespace SQLiteNetExtensions.Extensions
                 }
                 else if (relationshipAttribute is TextBlobAttribute)
                 {
-                    TextBlobOperations.UpdateTextBlobProperty(ref element, relationshipProperty);
+                    TextBlobOperations.UpdateTextBlobProperty(element, relationshipProperty);
                 }
             }
         }
@@ -125,15 +125,17 @@ namespace SQLiteNetExtensions.Extensions
             }
 
             // Objects already updated, now change the database
-            var childrenKeys = string.Join(",", childrenKeyList);
+            var childrenPlaceHolders = string.Join(",", Enumerable.Repeat("?", childrenKeyList.Count));
             var query = string.Format("update {0} set {1} = ? where {2} in ({3})",
-                                      entityType.Name, inverseForeignKeyProperty.Name, inversePrimaryKeyProperty.Name, childrenKeys);
-            conn.Execute(query, keyValue);
+                entityType.Name, inverseForeignKeyProperty.Name, inversePrimaryKeyProperty.Name, childrenPlaceHolders);
+            var parameters = new List<object> { keyValue };
+            parameters.AddRange(childrenKeyList);
+            conn.Execute(query, parameters.ToArray());
 
             // Delete previous relationships
             var deleteQuery = string.Format("update {0} set {1} = NULL where {1} == ? and {2} not in ({3})",
-                                            entityType.Name, inverseForeignKeyProperty.Name, inversePrimaryKeyProperty.Name, childrenKeys);
-            conn.Execute(deleteQuery, keyValue);
+                entityType.Name, inverseForeignKeyProperty.Name, inversePrimaryKeyProperty.Name, childrenPlaceHolders);
+            conn.Execute(deleteQuery, parameters.ToArray());
         }
 
         private static void UpdateOneToOneInverseForeignKey<T>(this SQLiteConnection conn, T element, PropertyInfo relationshipProperty)
@@ -191,9 +193,9 @@ namespace SQLiteNetExtensions.Extensions
                 conn.Execute(query, keyValue, childKey);
 
                 // Delete previous relationships
-                var deleteQuery = string.Format("update {0} set {1} = NULL where {1} == ? and {2} not in ({3})",
-                                                entityType.Name, inverseForeignKeyProperty.Name, inversePrimaryKeyProperty.Name, childKey ?? "");
-                conn.Execute(deleteQuery, keyValue);
+                var deleteQuery = string.Format("update {0} set {1} = NULL where {1} == ? and {2} not in (?)",
+                                                entityType.Name, inverseForeignKeyProperty.Name, inversePrimaryKeyProperty.Name);
+                conn.Execute(deleteQuery, keyValue, childKey ?? "");
             }
         }
 
@@ -224,13 +226,15 @@ namespace SQLiteNetExtensions.Extensions
             var childList = (IEnumerable)relationshipProperty.GetValue(element, null);
             var childKeyList = (from object child in childList ?? new List<object>()
                                select otherEntityPrimaryKeyProperty.GetValue(child, null)).ToList();
-            var childKeysString = string.Join(",", childKeyList);
 
             // Check for already existing relationships
+            var childrenPlaceHolders = string.Join(",", Enumerable.Repeat("?", childKeyList.Count));
             var currentChildrenQuery = string.Format("select {0} from {1} where {2} == ? and {0} in ({3})",
-                otherEntityForeignKeyProperty.Name, intermediateType.Name, currentEntityForeignKeyProperty.Name, childKeysString);
+                otherEntityForeignKeyProperty.Name, intermediateType.Name, currentEntityForeignKeyProperty.Name, childrenPlaceHolders);
+            var parameters = new List<object>{ primaryKey };
+            parameters.AddRange(childKeyList);
             var currentChildKeyList =
-                from object child in conn.Query(conn.GetMapping(intermediateType), currentChildrenQuery, primaryKey)
+                from object child in conn.Query(conn.GetMapping(intermediateType), currentChildrenQuery, parameters.ToArray())
                 select otherEntityForeignKeyProperty.GetValue(child, null);
             
 
@@ -251,8 +255,8 @@ namespace SQLiteNetExtensions.Extensions
             // Delete any other pending relationship
             var deleteQuery = string.Format("delete from {0} where {1} == ? and {2} not in ({3})",
                 intermediateType.Name, currentEntityForeignKeyProperty.Name,
-                otherEntityForeignKeyProperty.Name, childKeysString);
-            conn.Execute(deleteQuery, primaryKey);
+                otherEntityForeignKeyProperty.Name, childrenPlaceHolders);
+            conn.Execute(deleteQuery, parameters.ToArray());
         }
     }
 }

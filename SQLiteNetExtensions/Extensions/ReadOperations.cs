@@ -21,55 +21,55 @@ namespace SQLiteNetExtensions.Extensions
         public static T GetWithChildren<T>(this SQLiteConnection conn, object pk) where T : new()
         {
             var element = conn.Get<T>(pk);
-            conn.GetChildren(ref element);
+            conn.GetChildren(element);
             return element;
         }
 
-        public static void GetChildren<T>(this SQLiteConnection conn, ref T element) where T : new()
+        public static void GetChildren<T>(this SQLiteConnection conn, T element) where T : new()
         {
             foreach (var relationshipProperty in typeof (T).GetRelationshipProperties())
             {
-                conn.GetChild(ref element, relationshipProperty);
+                conn.GetChild(element, relationshipProperty);
             }
         }
 
-        public static void GetChild<T>(this SQLiteConnection conn, ref T element, string relationshipProperty)
+        public static void GetChild<T>(this SQLiteConnection conn, T element, string relationshipProperty)
         {
-            conn.GetChild(ref element, typeof (T).GetProperty(relationshipProperty));
+            conn.GetChild(element, typeof (T).GetProperty(relationshipProperty));
         }
 
-        public static void GetChild<T>(this SQLiteConnection conn, ref T element, Expression<Func<T, object>> expression)
+        public static void GetChild<T>(this SQLiteConnection conn, T element, Expression<Func<T, object>> expression)
         {
-            conn.GetChild(ref element, ReflectionExtensions.GetProperty(expression));
+            conn.GetChild(element, ReflectionExtensions.GetProperty(expression));
         }
 
-        public static void GetChild<T>(this SQLiteConnection conn, ref T element, PropertyInfo relationshipProperty)
+        public static void GetChild<T>(this SQLiteConnection conn, T element, PropertyInfo relationshipProperty)
         {
             var relationshipAttribute = relationshipProperty.GetAttribute<RelationshipAttribute>();
 
             if (relationshipAttribute is OneToOneAttribute)
             {
-                conn.GetOneToOneChild(ref element, relationshipProperty);
+                conn.GetOneToOneChild(element, relationshipProperty);
             }
             else if (relationshipAttribute is OneToManyAttribute)
             {
-                conn.GetOneToManyChildren(ref element, relationshipProperty);
+                conn.GetOneToManyChildren(element, relationshipProperty);
             }
             else if (relationshipAttribute is ManyToOneAttribute)
             {
-                conn.GetManyToOneChild(ref element, relationshipProperty);
+                conn.GetManyToOneChild(element, relationshipProperty);
             }
             else if (relationshipAttribute is ManyToManyAttribute)
             {
-                conn.GetManyToManyChildren(ref element, relationshipProperty);
+                conn.GetManyToManyChildren(element, relationshipProperty);
             }
             else if (relationshipAttribute is TextBlobAttribute)
             {
-                TextBlobOperations.GetTextBlobChild(ref element, relationshipProperty);
+                TextBlobOperations.GetTextBlobChild(element, relationshipProperty);
             }
         }
 
-        private static void GetOneToOneChild<T>(this SQLiteConnection conn, ref T element,
+        private static void GetOneToOneChild<T>(this SQLiteConnection conn, T element,
                                                 PropertyInfo relationshipProperty)
         {
             var type = typeof (T);
@@ -128,7 +128,7 @@ namespace SQLiteNetExtensions.Extensions
         }
 
 
-        private static void GetManyToOneChild<T>(this SQLiteConnection conn, ref T element,
+        private static void GetManyToOneChild<T>(this SQLiteConnection conn, T element,
                                                  PropertyInfo relationshipProperty)
         {
             var type = typeof (T);
@@ -158,7 +158,7 @@ namespace SQLiteNetExtensions.Extensions
 
         }
 
-        private static void GetOneToManyChildren<T>(this SQLiteConnection conn, ref T element,
+        private static void GetOneToManyChildren<T>(this SQLiteConnection conn, T element,
                                                     PropertyInfo relationshipProperty)
         {
             var type = typeof (T);
@@ -220,7 +220,7 @@ namespace SQLiteNetExtensions.Extensions
             }
         }
 
-        private static void GetManyToManyChildren<T>(this SQLiteConnection conn, ref T element,
+        private static void GetManyToManyChildren<T>(this SQLiteConnection conn, T element,
                                                      PropertyInfo relationshipProperty)
         {
             var type = typeof (T);

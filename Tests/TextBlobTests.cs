@@ -46,7 +46,7 @@ namespace Tests
             var obj1 = obj;
             mockSerializer.Setup(serializer => serializer.Serialize(obj1.Elements)).Returns(() => textValue);
             
-            TextBlobOperations.UpdateTextBlobProperty(ref obj, typeof(ClassA).GetProperty("Elements"));
+            TextBlobOperations.UpdateTextBlobProperty(obj, typeof(ClassA).GetProperty("Elements"));
 
             Assert.AreEqual(textValue, obj1.ElementsBlobbed);
         }
@@ -74,7 +74,7 @@ namespace Tests
             var elementsProperty = typeof (ClassA).GetProperty("Elements");
             mockSerializer.Setup(serializer => serializer.Deserialize(textValue, elementsProperty.PropertyType)).Returns(() => values);
 
-            TextBlobOperations.GetTextBlobChild(ref obj, typeof(ClassA).GetProperty("Elements"));
+            TextBlobOperations.GetTextBlobChild(obj, typeof(ClassA).GetProperty("Elements"));
 
             Assert.AreEqual(values, obj1.Elements);
         }

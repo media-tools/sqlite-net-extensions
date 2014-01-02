@@ -81,6 +81,31 @@ namespace SQLiteNetExtensions.IntegrationTests
             public string Foo { get; set; }
         }
 
+        public class O2MClassG
+        {
+            [PrimaryKey]
+            public Guid Guid { get; set; }
+
+            [OneToMany]
+            public List<O2MClassH> HObjects { get; set; }
+
+            public string Bar { get; set; }
+        }
+
+        public class O2MClassH
+        {
+            [PrimaryKey]
+            public Guid Guid { get; set; }
+
+            [ForeignKey(typeof(O2MClassG))]
+            public Guid ClassGKey { get; set; }
+
+            [ManyToOne]     // OneToMany Inverse relationship
+            public O2MClassG ObjectG { get; set; }
+
+            public string Foo { get; set; }
+        }
+
         [Test]
         public void TestGetOneToManyList()
         {
@@ -114,7 +139,7 @@ namespace SQLiteNetExtensions.IntegrationTests
             Assert.Null(objectA.BObjects);
 
             // Fetch (yet empty) the relationship
-            conn.GetChildren(ref objectA);
+            conn.GetChildren(objectA);
             Assert.NotNull(objectA.BObjects);
             Assert.AreEqual(0, objectA.BObjects.Count);
 
@@ -129,7 +154,7 @@ namespace SQLiteNetExtensions.IntegrationTests
             Assert.AreEqual(0, objectA.BObjects.Count);
 
             // Fetch the relationship
-            conn.GetChildren(ref objectA);
+            conn.GetChildren(objectA);
 
             Assert.NotNull(objectA.BObjects);
             Assert.AreEqual(objectsB.Count, objectA.BObjects.Count);
@@ -173,7 +198,7 @@ namespace SQLiteNetExtensions.IntegrationTests
             Assert.Null(objectC.DObjects);
 
             // Fetch (yet empty) the relationship
-            conn.GetChildren(ref objectC);
+            conn.GetChildren(objectC);
             Assert.NotNull(objectC.DObjects);
             Assert.AreEqual(0, objectC.DObjects.Count);
 
@@ -188,7 +213,7 @@ namespace SQLiteNetExtensions.IntegrationTests
             Assert.AreEqual(0, objectC.DObjects.Count);
 
             // Fetch the relationship
-            conn.GetChildren(ref objectC);
+            conn.GetChildren(objectC);
 
             Assert.NotNull(objectC.DObjects);
             Assert.AreEqual(objectsD.Count, objectC.DObjects.Count);
@@ -235,7 +260,7 @@ namespace SQLiteNetExtensions.IntegrationTests
             Assert.Null(objectE.FObjects);
 
             // Fetch (yet empty) the relationship
-            conn.GetChildren(ref objectE);
+            conn.GetChildren(objectE);
             Assert.NotNull(objectE.FObjects);
             Assert.AreEqual(0, objectE.FObjects.Length);
 
@@ -250,7 +275,7 @@ namespace SQLiteNetExtensions.IntegrationTests
             Assert.AreEqual(0, objectE.FObjects.Length);
 
             // Fetch the relationship
-            conn.GetChildren(ref objectE);
+            conn.GetChildren(objectE);
 
             Assert.NotNull(objectE.FObjects);
             Assert.AreEqual(objectsF.Length, objectE.FObjects.Length);
@@ -544,8 +569,132 @@ namespace SQLiteNetExtensions.IntegrationTests
                 Assert.AreSame(objectC, objectD.ObjectC, "Inverse relationship hasn't been set");
 
                 // Check database values
-                var newObjectB = conn.Get<O2MClassB>(objectD.Id);
-                Assert.AreEqual(objectC.Id, newObjectB.ClassAKey, "Database stored value is not correct");
+                var newObjectD = conn.Get<O2MClassD>(objectD.Id);
+                Assert.AreEqual(objectC.Id, newObjectD.ClassCKey, "Database stored value is not correct");
+            }
+
+        }
+
+        [Test]
+        public void TestGetOneToManyListWithInverseGuidId()
+        {
+            var conn = new SQLiteConnection(Utils.DatabaseFilePath);
+            conn.DropTable<O2MClassG>();
+            conn.DropTable<O2MClassH>();
+            conn.CreateTable<O2MClassG>();
+            conn.CreateTable<O2MClassH>();
+
+            // Use standard SQLite-Net API to create the objects
+            var objectsD = new List<O2MClassH>
+            {
+                new O2MClassH {
+                    Guid = Guid.NewGuid(),
+                    Foo = string.Format("1- Foo String {0}", new Random().Next(100))
+                },
+                new O2MClassH {
+                    Guid = Guid.NewGuid(),
+                    Foo = string.Format("2- Foo String {0}", new Random().Next(100))
+                },
+                new O2MClassH {
+                    Guid = Guid.NewGuid(),
+                    Foo = string.Format("3- Foo String {0}", new Random().Next(100))
+                },
+                new O2MClassH {
+                    Guid = Guid.NewGuid(),
+                    Foo = string.Format("4- Foo String {0}", new Random().Next(100))
+                }
+            };
+            conn.InsertAll(objectsD);
+
+            var objectC = new O2MClassG { Guid = Guid.NewGuid() };
+            conn.Insert(objectC);
+
+            Assert.Null(objectC.HObjects);
+
+            // Fetch (yet empty) the relationship
+            conn.GetChildren(objectC);
+            Assert.NotNull(objectC.HObjects);
+            Assert.AreEqual(0, objectC.HObjects.Count);
+
+            // Set the relationship using IDs
+            foreach (var objectD in objectsD)
+            {
+                objectD.ClassGKey = objectC.Guid;
+                conn.Update(objectD);
+            }
+
+            Assert.NotNull(objectC.HObjects);
+            Assert.AreEqual(0, objectC.HObjects.Count);
+
+            // Fetch the relationship
+            conn.GetChildren(objectC);
+
+            Assert.NotNull(objectC.HObjects);
+            Assert.AreEqual(objectsD.Count, objectC.HObjects.Count);
+            var foos = objectsD.Select(objectB => objectB.Foo).ToList();
+            foreach (var objectD in objectC.HObjects)
+            {
+                Assert.IsTrue(foos.Contains(objectD.Foo));
+                Assert.AreEqual(objectC.Guid, objectD.ObjectG.Guid);
+                Assert.AreEqual(objectC.Bar, objectD.ObjectG.Bar);
+                Assert.AreSame(objectC, objectD.ObjectG); // Not only equal, they are the same!
+            }
+        }
+
+        [Test]
+        public void TestUpdateSetOneToManyListWithInverseGuidId()
+        {
+            var conn = new SQLiteConnection(Utils.DatabaseFilePath);
+            conn.DropTable<O2MClassG>();
+            conn.DropTable<O2MClassH>();
+            conn.CreateTable<O2MClassG>();
+            conn.CreateTable<O2MClassH>();
+
+            // Use standard SQLite-Net API to create the objects
+            var objectsH = new List<O2MClassH>
+            {
+                new O2MClassH {
+                    Guid = Guid.NewGuid(),
+                    Foo = string.Format("1- Foo String {0}", new Random().Next(100))
+                },
+                new O2MClassH {
+                    Guid = Guid.NewGuid(),
+                    Foo = string.Format("2- Foo String {0}", new Random().Next(100))
+                },
+                new O2MClassH {
+                    Guid = Guid.NewGuid(),
+                    Foo = string.Format("3- Foo String {0}", new Random().Next(100))
+                },
+                new O2MClassH {
+                    Guid = Guid.NewGuid(),
+                    Foo = string.Format("4- Foo String {0}", new Random().Next(100))
+                }
+            };
+            conn.InsertAll(objectsH);
+
+            var objectG = new O2MClassG { Guid = Guid.NewGuid() };
+            conn.Insert(objectG);
+
+            Assert.Null(objectG.HObjects);
+
+            objectG.HObjects = objectsH;
+
+            foreach (var objectD in objectsH)
+            {
+                Assert.AreEqual(Guid.Empty, objectD.ClassGKey, "Foreign keys shouldn't have been updated yet");
+            }
+
+
+            conn.UpdateWithChildren(objectG);
+
+            foreach (var objectH in objectG.HObjects)
+            {
+                Assert.AreEqual(objectG.Guid, objectH.ClassGKey, "Foreign keys haven't been updated yet");
+                Assert.AreSame(objectG, objectH.ObjectG, "Inverse relationship hasn't been set");
+
+                // Check database values
+                var newObjectH = conn.Get<O2MClassH>(objectH.Guid);
+                Assert.AreEqual(objectG.Guid, newObjectH.ClassGKey, "Database stored value is not correct");
             }
 
         }
