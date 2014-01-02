@@ -6,6 +6,7 @@ using System.Linq;
 using System.Reflection;
 using SQLiteNetExtensions.Attributes;
 using SQLiteNetExtensions.Extensions.TextBlob;
+using System.Linq.Expressions;
 
 #if USING_MVVMCROSS
 using SQLiteConnection = Cirrious.MvvmCross.Community.Plugins.Sqlite.ISQLiteConnection;
@@ -35,6 +36,11 @@ namespace SQLiteNetExtensions.Extensions
         public static void GetChild<T>(this SQLiteConnection conn, ref T element, string relationshipProperty)
         {
             conn.GetChild(ref element, typeof (T).GetProperty(relationshipProperty));
+        }
+
+        public static void GetChild<T>(this SQLiteConnection conn, ref T element, Expression<Func<T, object>> expression)
+        {
+            conn.GetChild(ref element, ReflectionExtensions.GetProperty(expression));
         }
 
         public static void GetChild<T>(this SQLiteConnection conn, ref T element, PropertyInfo relationshipProperty)

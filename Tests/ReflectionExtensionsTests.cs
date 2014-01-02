@@ -246,5 +246,17 @@ namespace SQLiteNetExtensions.Tests.Extensions
             Assert.AreEqual(expectedTypeAForeignKeyProperty, metaInfo.OriginProperty);
             Assert.AreEqual(expectedTypeDForeignKeyProperty, metaInfo.DestinationProperty);
         }
+
+        [Test]
+        public void TestExpressionProperty()
+        {
+            var typeB = typeof (DummyClassB);
+
+            var expectedAOneBProperty = typeB.GetProperty("OneA");
+
+            var aOneBProperty = ReflectionExtensions.GetProperty<DummyClassB>(a => a.OneA);
+
+            Assert.AreEqual(expectedAOneBProperty, aOneBProperty);
+        }
     }
 }

@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
 using SQLiteNetExtensions.Attributes;
+using System.Linq.Expressions;
 
 #if USING_MVVMCROSS
 using Cirrious.MvvmCross.Community.Plugins.Sqlite;
@@ -167,6 +168,14 @@ namespace SQLiteNetExtensions.Extensions
             return result;
         }
 
+        public static PropertyInfo GetProperty<T>(Expression<Func<T, object>> expression) {
+            var type = typeof(T);
+            var body = expression.Body as MemberExpression;
+            Debug.Assert(body != null, "Expression should be a property member expression");
+
+            var propertyName = body.Member.Name;
+            return type.GetProperty(propertyName);
+        }
 
         public static ManyToManyMetaInfo GetManyToManyMetaInfo(this Type type, PropertyInfo relationship)
         {
