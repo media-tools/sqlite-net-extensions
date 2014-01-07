@@ -26,7 +26,7 @@ This is how you usually specify a relationship in **sqlite-net** (extracted from
 
     public class Stock    {        [PrimaryKey, AutoIncrement]        public int Id { get; set; }        [MaxLength(8)]        public string Symbol { get; set; }    }    public class Valuation    {        [PrimaryKey, AutoIncrement]        public int Id { get; set; }        [Indexed]        public int StockId { get; set; }        public DateTime Time { get; set; }        public decimal Price { get; set; }    }
 
-Then you query like this:
+Then you obtain the Valuations for a specific Stock query like this:
 
     return db.Query<Valuation> ("select * from Valuation where StockId = ?", stock.Id);
     
@@ -34,17 +34,18 @@ Then you query like this:
 
 With SQLite-Net extensions, no more need to write the queries manually, just specify the relationships in the entities:
 
-    public class Stock    {        [PrimaryKey, AutoIncrement]        public int Id { get; set; }        [MaxLength(8)]        public string Symbol { get; set; }        [OneToOne]      // One to one relationship with Valuation        public Valuation Valuation { get; set; }    }    public class Valuation    {        [PrimaryKey, AutoIncrement]        public int Id { get; set; }        [ForeignKey(typeof(Stock))]     // Specify the foreign key        public int StockId { get; set; }        public DateTime Time { get; set; }        public decimal Price { get; set; }        [OneToOne]      // One to one relationship with Stock        public Stock Stock { get; set; }    }
+    public class Stock    {        [PrimaryKey, AutoIncrement]        public int Id { get; set; }        [MaxLength(8)]        public string Symbol { get; set; }        [OneToMany]      // One to many relationship with Valuation        public List<Valuation> Valuations { get; set; }    }    public class Valuation    {        [PrimaryKey, AutoIncrement]        public int Id { get; set; }        [ForeignKey(typeof(Stock))]     // Specify the foreign key        public int StockId { get; set; }        public DateTime Time { get; set; }        public decimal Price { get; set; }        [ManyToOne]      // Many to one relationship with Stock        public Stock Stock { get; set; }    }
 
-SQLite-Net Extensions will find all the properties with a relationship attribute and then find the foreign keys and inverse attributes for them.
+SQLite-Net Extensions will find all the properties with a relationship attribute and then find the foreign keys and inverse attributes with the matching type for them.
+
+Note that `Stock.Valuations` property is a `OneToMany` relationship to `Valuation`, that already has a `ManyToOne` relationship to `Stock` in `Valuation.Stock` property. These inverse relationships and the `ForeignKey` property will be discovered and updated automatically at runtime.
 
 #### Read and write operations
 Here's how we'll create, read and update the entities:
 
-    var db = new SQLiteConnection("database.sqlitedb");    db.CreateTable<Stock>();    db.CreateTable<Valuation>();    var euro = new Stock()        {            Symbol = "€"        };    db.Insert(euro);   // Insert the object in the database    var valuation = new Valuation()        {            Price = 15,            Time = DateTime.Now,        };    db.Insert(valuation);   // Insert the object in the database    // Objects created, let's stablish the relationship    euro.Valuation = valuation;    db.UpdateWithChildren(euro);   // Update the changes into the database    if (valuation.Stock == euro)    {        Debug.WriteLine("Inverse relationship already set, yay!");    }    // Get the object and the relationships    var storedValuation = db.GetWithChildren<Valuation>(valuation.Id);    if (euro.Symbol.Equals(storedValuation.Stock.Symbol))    {        Debug.WriteLine("Object and relationships loaded correctly!");    }
-    
-Ok, maybe that was a horrible example, because one stock may have many valuations, so it's not a one-to-one, but you get the point.
+    var db = new SQLiteConnection("database.sqlitedb");    db.CreateTable<Stock>();    db.CreateTable<Valuation>();    var euro = new Stock()        {            Symbol = "€"        };    db.Insert(euro);   // Insert the object in the database    var valuation = new Valuation()        {            Price = 15,            Time = DateTime.Now,        };    db.Insert(valuation);   // Insert the object in the database    // Objects created, let's stablish the relationship    euro.Valuations = new List<Valuation> { valuation };    db.UpdateWithChildren(euro);   // Update the changes into the database    if (valuation.Stock == euro)    {        Debug.WriteLine("Inverse relationship already set, yay!");    }    // Get the object and the relationships    var storedValuation = db.GetWithChildren<Valuation>(valuation.Id);    if (euro.Symbol.Equals(storedValuation.Stock.Symbol))    {        Debug.WriteLine("Object and relationships loaded correctly!");    }
 
+We've specified `AutoIncrement` primary keys, so we have to insert the objects to the database first to be assigned a correct primary key before stablishing the relationships.    
 ## Some action
 Probably *one-to-one* relationships aren't the reason that you are reading this, so let's prepare a more complete scenario using all the different kind of relationships:
 
