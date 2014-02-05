@@ -22,5 +22,6 @@ namespace SQLiteNetExtensions.Attributes
         public string InverseProperty { get; private set; }
         public string InverseForeignKey { get; private set; }
         public OnDeleteAction OnDeleteAction { get; private set; }
+        public bool ReadOnly { get; set; }
     }
 }

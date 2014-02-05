@@ -33,6 +33,11 @@ namespace SQLiteNetExtensions.Extensions
             foreach (var relationshipProperty in type.GetRelationshipProperties())
             {
                 var relationshipAttribute = relationshipProperty.GetAttribute<RelationshipAttribute>();
+
+                // Ignore read-only attributes
+                if (relationshipAttribute.ReadOnly)
+                    continue;
+
                 if (relationshipAttribute is OneToOneAttribute || relationshipAttribute is ManyToOneAttribute)
                 {
                     var foreignKeyProperty = type.GetForeignKeyProperty(relationshipProperty);
@@ -66,6 +71,11 @@ namespace SQLiteNetExtensions.Extensions
             foreach (var relationshipProperty in typeof(T).GetRelationshipProperties())
             {
                 var relationshipAttribute = relationshipProperty.GetAttribute<RelationshipAttribute>();
+
+                // Ignore read-only attributes
+                if (relationshipAttribute.ReadOnly)
+                    continue;
+
                 if (relationshipAttribute is OneToManyAttribute)
                 {
                     conn.UpdateOneToManyInverseForeignKey(element, relationshipProperty);
