@@ -27,6 +27,40 @@ namespace SQLiteNetExtensions.Extensions
             conn.UpdateInverseForeignKeys(element);
         }
 
+        /// <summary>
+        /// Deletes all the objects passed as parameters from the database.
+        /// Relationships are not taken into account in this method
+        /// </summary>
+        /// <param name="objects">Objects to be deleted from the database</param>
+        /// <typeparam name="T">The Entity type, it should match de database entity type</typeparam>
+        public static void DeleteAll<T>(this SQLiteConnection conn, IEnumerable<T> objects) {
+            if (objects == null)
+                return;
+
+            var type = typeof(T);
+            var primaryKeyProperty = type.GetPrimaryKey();
+
+            var primaryKeyValues = (from element in objects
+                select primaryKeyProperty.GetValue(element, null)).ToArray();
+                
+            conn.DeleteAllIds(primaryKeyValues, type.Name, primaryKeyProperty.Name);
+        }
+
+        /// <summary>
+        /// Deletes all the objects passed with IDs equal to the passed parameters from the database.
+        /// Relationships are not taken into account in this method
+        /// </summary>
+        /// <param name="primaryKeyValues">Primary keys of the objects to be deleted from the database</param>
+        /// <typeparam name="T">The Entity type, it should match de database entity type</typeparam>
+        public static void DeleteAllIds<T>(this SQLiteConnection conn, IEnumerable<object> primaryKeyValues) {
+            var type = typeof(T);
+            var primaryKeyProperty = type.GetPrimaryKey();
+
+            conn.DeleteAllIds(primaryKeyValues.ToArray(), type.Name, primaryKeyProperty.Name);
+        }
+
+
+        #region Private methods
         private static void RefreshForeignKeys<T>(T element)
         {
             var type = typeof (T);
@@ -268,5 +302,16 @@ namespace SQLiteNetExtensions.Extensions
                 otherEntityForeignKeyProperty.Name, childrenPlaceHolders);
             conn.Execute(deleteQuery, parameters.ToArray());
         }
+
+        private static void DeleteAllIds(this SQLiteConnection conn, object[] primaryKeyValues, string entityName, string primaryKeyName) {
+            if (primaryKeyValues == null || primaryKeyValues.Length == 0)
+                return;
+
+            var placeholdersString = string.Join(",", Enumerable.Repeat("?", primaryKeyValues.Length));
+            var deleteQuery = string.Format("delete from {0} where {1} in ({2})", entityName, primaryKeyName, placeholdersString);
+
+            conn.Execute(deleteQuery, primaryKeyValues);
+        }
+        #endregion
     }
 }

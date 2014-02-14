@@ -69,6 +69,7 @@ namespace SQLiteNetExtensions.Extensions
             }
         }
 
+        #region Private methods
         private static void GetOneToOneChild<T>(this SQLiteConnection conn, T element,
                                                 PropertyInfo relationshipProperty)
         {
@@ -281,5 +282,6 @@ namespace SQLiteNetExtensions.Extensions
             relationshipProperty.SetValue(element, values, null);
 
         }
+        #endregion
     }
 }
