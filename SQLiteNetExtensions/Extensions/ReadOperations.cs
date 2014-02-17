@@ -7,6 +7,7 @@ using System.Reflection;
 using SQLiteNetExtensions.Attributes;
 using SQLiteNetExtensions.Extensions.TextBlob;
 using System.Linq.Expressions;
+using SQLiteNetExtensions.Exceptions;
 
 #if USING_MVVMCROSS
 using SQLiteConnection = Cirrious.MvvmCross.Community.Plugins.Sqlite.ISQLiteConnection;
@@ -18,6 +19,9 @@ namespace SQLiteNetExtensions.Extensions
 {
     public static class ReadOperations
     {
+        // Enable to allow descriptive error descriptions on incorrect relationships
+        public static bool EnableRuntimeAssertions = true;
+
         public static T GetWithChildren<T>(this SQLiteConnection conn, object pk) where T : new()
         {
             var element = conn.Get<T>(pk);
@@ -77,25 +81,25 @@ namespace SQLiteNetExtensions.Extensions
             EnclosedType enclosedType;
             var entityType = relationshipProperty.GetEntityType(out enclosedType);
 
-            Debug.Assert(enclosedType == EnclosedType.None, "OneToOne relationship cannot be of type List or Array");
+            Assert(enclosedType == EnclosedType.None, type, relationshipProperty, "OneToOne relationship cannot be of type List or Array");
 
             var currentEntityPrimaryKeyProperty = type.GetPrimaryKey();
             var otherEntityPrimaryKeyProperty = entityType.GetPrimaryKey();
-            Debug.Assert(currentEntityPrimaryKeyProperty != null || otherEntityPrimaryKeyProperty != null,
+            Assert(currentEntityPrimaryKeyProperty != null || otherEntityPrimaryKeyProperty != null, type, relationshipProperty, 
                          "At least one entity in a OneToOne relationship must have Primary Key");
 
             var currentEntityForeignKeyProperty = type.GetForeignKeyProperty(relationshipProperty);
             var otherEntityForeignKeyProperty = type.GetForeignKeyProperty(relationshipProperty, inverse: true);
-            Debug.Assert(currentEntityForeignKeyProperty != null || otherEntityForeignKeyProperty != null,
+            Assert(currentEntityForeignKeyProperty != null || otherEntityForeignKeyProperty != null, type, relationshipProperty, 
                          "At least one entity in a OneToOne relationship must have Foreign Key");
 
             var hasForeignKey = otherEntityPrimaryKeyProperty != null && currentEntityForeignKeyProperty != null;
             var hasInverseForeignKey = currentEntityPrimaryKeyProperty != null && otherEntityForeignKeyProperty != null;
-            Debug.Assert(hasForeignKey || hasInverseForeignKey,
+            Assert(hasForeignKey || hasInverseForeignKey, type, relationshipProperty, 
                          "Missing either ForeignKey or PrimaryKey for a complete OneToOne relationship");
 
             var tableMapping = conn.GetMapping(entityType);
-            Debug.Assert(tableMapping != null, "There's no mapping table for OneToOne relationship");
+            Assert(tableMapping != null, type, relationshipProperty,  "There's no mapping table for OneToOne relationship");
 
             var inverseProperty = type.GetInverseProperty(relationshipProperty);
 
@@ -136,17 +140,17 @@ namespace SQLiteNetExtensions.Extensions
             EnclosedType enclosedType;
             var entityType = relationshipProperty.GetEntityType(out enclosedType);
 
-            Debug.Assert(enclosedType == EnclosedType.None, "ManyToOne relationship cannot be of type List or Array");
+            Assert(enclosedType == EnclosedType.None, type, relationshipProperty,  "ManyToOne relationship cannot be of type List or Array");
 
             var otherEntityPrimaryKeyProperty = entityType.GetPrimaryKey();
-            Debug.Assert(otherEntityPrimaryKeyProperty != null,
+            Assert(otherEntityPrimaryKeyProperty != null, type, relationshipProperty, 
                          "ManyToOne relationship destination must have Primary Key");
 
             var currentEntityForeignKeyProperty = type.GetForeignKeyProperty(relationshipProperty);
-            Debug.Assert(currentEntityForeignKeyProperty != null, "ManyToOne relationship origin must have Foreign Key");
+            Assert(currentEntityForeignKeyProperty != null, type, relationshipProperty,  "ManyToOne relationship origin must have Foreign Key");
 
             var tableMapping = conn.GetMapping(entityType);
-            Debug.Assert(tableMapping != null, "There's no mapping table for OneToMany relationship destination");
+            Assert(tableMapping != null, type, relationshipProperty,  "There's no mapping table for OneToMany relationship destination");
 
             object value = null;
             var foreignKeyValue = currentEntityForeignKeyProperty.GetValue(element, null);
@@ -166,17 +170,17 @@ namespace SQLiteNetExtensions.Extensions
             EnclosedType enclosedType;
             var entityType = relationshipProperty.GetEntityType(out enclosedType);
 
-            Debug.Assert(enclosedType != EnclosedType.None, "OneToMany relationship must be a List or Array");
+            Assert(enclosedType != EnclosedType.None, type, relationshipProperty,  "OneToMany relationship must be a List or Array");
 
             var currentEntityPrimaryKeyProperty = type.GetPrimaryKey();
-            Debug.Assert(currentEntityPrimaryKeyProperty != null, "OneToMany relationship origin must have Primary Key");
+            Assert(currentEntityPrimaryKeyProperty != null, type, relationshipProperty,  "OneToMany relationship origin must have Primary Key");
 
             var otherEntityForeignKeyProperty = type.GetForeignKeyProperty(relationshipProperty, inverse: true);
-            Debug.Assert(otherEntityForeignKeyProperty != null,
+            Assert(otherEntityForeignKeyProperty != null, type, relationshipProperty, 
                          "OneToMany relationship destination must have Foreign Key to the origin class");
 
             var tableMapping = conn.GetMapping(entityType);
-            Debug.Assert(tableMapping != null, "There's no mapping table for OneToMany relationship destination");
+            Assert(tableMapping != null, type, relationshipProperty,  "There's no mapping table for OneToMany relationship destination");
 
             var inverseProperty = type.GetInverseProperty(relationshipProperty);
 
@@ -236,13 +240,13 @@ namespace SQLiteNetExtensions.Extensions
             var intermediateType = manyToManyMetaInfo.IntermediateType;
             var tableMapping = conn.GetMapping(entityType);
 
-            Debug.Assert(enclosedType != EnclosedType.None, "ManyToMany relationship must be a List or Array");
-            Debug.Assert(currentEntityPrimaryKeyProperty != null, "ManyToMany relationship origin must have Primary Key");
-            Debug.Assert(otherEntityPrimaryKeyProperty != null, "ManyToMany relationship destination must have Primary Key");
-            Debug.Assert(intermediateType != null, "ManyToMany relationship intermediate type cannot be null");
-            Debug.Assert(currentEntityForeignKeyProperty != null, "ManyToMany relationship origin must have a foreign key defined in the intermediate type");
-            Debug.Assert(otherEntityForeignKeyProperty != null, "ManyToMany relationship destination must have a foreign key defined in the intermediate type");
-            Debug.Assert(tableMapping != null, "There's no mapping table defined for ManyToMany relationship origin");
+            Assert(enclosedType != EnclosedType.None, type, relationshipProperty,  "ManyToMany relationship must be a List or Array");
+            Assert(currentEntityPrimaryKeyProperty != null, type, relationshipProperty,  "ManyToMany relationship origin must have Primary Key");
+            Assert(otherEntityPrimaryKeyProperty != null, type, relationshipProperty,  "ManyToMany relationship destination must have Primary Key");
+            Assert(intermediateType != null, type, relationshipProperty,  "ManyToMany relationship intermediate type cannot be null");
+            Assert(currentEntityForeignKeyProperty != null, type, relationshipProperty,  "ManyToMany relationship origin must have a foreign key defined in the intermediate type");
+            Assert(otherEntityForeignKeyProperty != null, type, relationshipProperty,  "ManyToMany relationship destination must have a foreign key defined in the intermediate type");
+            Assert(tableMapping != null, type, relationshipProperty,  "There's no mapping table defined for ManyToMany relationship origin");
 
             IEnumerable values = null;
             var primaryKeyValue = currentEntityPrimaryKeyProperty.GetValue(element, null);
@@ -280,6 +284,12 @@ namespace SQLiteNetExtensions.Extensions
             }
 
             relationshipProperty.SetValue(element, values, null);
+
+        }
+            
+        static void Assert(bool assertion, Type type, PropertyInfo property, string message) {
+            if (EnableRuntimeAssertions && !assertion)
+                throw new IncorrectRelationshipException(type.Name, property.Name, message);
 
         }
         #endregion
