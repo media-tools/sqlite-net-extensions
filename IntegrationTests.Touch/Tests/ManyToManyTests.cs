@@ -15,7 +15,7 @@ namespace SQLiteNetExtensions.IntegrationTests
     {
         public class M2MClassA
         {
-            [PrimaryKey, AutoIncrement]
+            [PrimaryKey, AutoIncrement, Column("_id")]
             public int Id { get; set; }
 
             [ManyToMany(typeof(ClassAClassB))]
@@ -34,7 +34,7 @@ namespace SQLiteNetExtensions.IntegrationTests
 
         public class ClassAClassB
         {
-            [ForeignKey(typeof(M2MClassA))]
+            [ForeignKey(typeof(M2MClassA)), Column("class_a_id")]
             public int ClassAId { get; set; }
 
             [ForeignKey(typeof(M2MClassB))]
@@ -67,6 +67,7 @@ namespace SQLiteNetExtensions.IntegrationTests
             public int ClassDId { get; set; }
         }
 
+        [Table("class_e")]
         public class M2MClassE
         {
             [PrimaryKey]
@@ -86,6 +87,7 @@ namespace SQLiteNetExtensions.IntegrationTests
             public string Foo { get; set; }
         }
 
+        [Table("class_e_class_f")]
         public class ClassEClassF
         {
             public Guid ClassEId { get; set; }   // ForeignKey attribute not needed, already specified in the ManyToMany relationship

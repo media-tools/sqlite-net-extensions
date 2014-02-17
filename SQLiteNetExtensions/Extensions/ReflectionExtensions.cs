@@ -30,6 +30,16 @@ namespace SQLiteNetExtensions.Extensions
 
     public static class ReflectionExtensions
     {
+        public static T GetAttribute<T>(this Type type) where T : Attribute  {
+            T attribute = null;
+            var attributes = (T[])type.GetCustomAttributes(typeof(T), true);
+            if (attributes.Length > 0)
+            {
+                attribute = attributes[0];
+            }
+            return attribute;
+        }
+
         public static T GetAttribute<T>(this PropertyInfo property) where T : Attribute
         {
             T attribute = null;
@@ -206,8 +216,26 @@ namespace SQLiteNetExtensions.Extensions
             return (from propety in type.GetProperties(BindingFlags.Public | BindingFlags.Instance)
                     where propety.GetAttribute<PrimaryKeyAttribute>() != null
                     select propety).FirstOrDefault();
-        } 
-        
+        }
+
+        public static string GetTableName(this Type type) {
+            var tableName = type.Name;
+            var tableAttribute = type.GetAttribute<TableAttribute>();
+            if (tableAttribute != null && tableAttribute.Name != null)
+                tableName = tableAttribute.Name;
+
+            return tableName;
+        }
+
+        public static string GetColumnName(this PropertyInfo property) {
+            var column = property.Name;
+            var columnAttribute = property.GetAttribute<ColumnAttribute>();
+            if (columnAttribute != null && columnAttribute.Name != null)
+                column = columnAttribute.Name;
+
+            return column;
+        }
+
     }
 
     

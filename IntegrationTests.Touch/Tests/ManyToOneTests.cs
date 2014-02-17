@@ -23,9 +23,10 @@ namespace SQLiteNetExtensions.IntegrationTests
             public M2OClassB OneClassB { get; set; }
         }
 
+        [Table("m2o_class_b")]
         public class M2OClassB
         {
-            [PrimaryKey, AutoIncrement]
+            [PrimaryKey, AutoIncrement, Column("_id_")]
             public int Id { get; set; }
 
             public string Foo { get; set; }
