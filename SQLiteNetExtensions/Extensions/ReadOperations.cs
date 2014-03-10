@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
 using SQLiteNetExtensions.Attributes;
@@ -32,7 +31,7 @@ namespace SQLiteNetExtensions.Extensions
         public static T FindWithChildren<T>(this SQLiteConnection conn, object pk) where T : new()
         {
             var element = conn.Find<T>(pk);
-            if (element != default(T))
+            if (!EqualityComparer<T>.Default.Equals(element, default(T)))
                 conn.GetChildren(element);
             return element;
         }
