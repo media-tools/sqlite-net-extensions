@@ -29,6 +29,14 @@ namespace SQLiteNetExtensions.Extensions
             return element;
         }
 
+        public static T FindWithChildren<T>(this SQLiteConnection conn, object pk) where T : new()
+        {
+            var element = conn.Find<T>(pk);
+            if (element != default(T))
+                conn.GetChildren(element);
+            return element;
+        }
+
         public static void GetChildren<T>(this SQLiteConnection conn, T element) where T : new()
         {
             foreach (var relationshipProperty in typeof (T).GetRelationshipProperties())
