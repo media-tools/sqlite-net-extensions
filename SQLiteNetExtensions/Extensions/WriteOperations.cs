@@ -107,7 +107,7 @@ namespace SQLiteNetExtensions.Extensions
 
         private static void UpdateInverseForeignKeys<T>(this SQLiteConnection conn, T element)
         {
-            foreach (var relationshipProperty in typeof(T).GetRelationshipProperties())
+            foreach (var relationshipProperty in element.GetType().GetRelationshipProperties())
             {
                 var relationshipAttribute = relationshipProperty.GetAttribute<RelationshipAttribute>();
 
@@ -132,7 +132,7 @@ namespace SQLiteNetExtensions.Extensions
             
         private static void UpdateOneToManyInverseForeignKey<T>(this SQLiteConnection conn, T element, PropertyInfo relationshipProperty)
         {
-            var type = typeof(T);
+            var type = element.GetType();
 
             EnclosedType enclosedType;
             var entityType = relationshipProperty.GetEntityType(out enclosedType);
@@ -189,7 +189,7 @@ namespace SQLiteNetExtensions.Extensions
 
         private static void UpdateOneToOneInverseForeignKey<T>(this SQLiteConnection conn, T element, PropertyInfo relationshipProperty)
         {
-            var type = typeof(T);
+            var type = element.GetType();
 
             EnclosedType enclosedType;
             var entityType = relationshipProperty.GetEntityType(out enclosedType);

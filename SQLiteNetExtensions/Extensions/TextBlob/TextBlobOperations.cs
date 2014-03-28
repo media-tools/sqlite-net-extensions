@@ -45,7 +45,7 @@ namespace SQLiteNetExtensions.Extensions.TextBlob
 
         public static void UpdateTextBlobProperty<T>(T element, PropertyInfo relationshipProperty)
         {
-            var type = typeof(T);
+            var type = element.GetType();
             var relationshipType = relationshipProperty.PropertyType;
 
             Debug.Assert(relationshipType != typeof(string), "TextBlob property is already a string");
