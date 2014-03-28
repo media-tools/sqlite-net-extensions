@@ -15,7 +15,7 @@ namespace SQLiteNetExtensions.IntegrationTests
     {
         public class M2MClassA
         {
-            [PrimaryKey, AutoIncrement]
+            [PrimaryKey, AutoIncrement, Column("_id")]
             public int Id { get; set; }
 
             [ManyToMany(typeof(ClassAClassB))]
@@ -34,7 +34,7 @@ namespace SQLiteNetExtensions.IntegrationTests
 
         public class ClassAClassB
         {
-            [ForeignKey(typeof(M2MClassA))]
+            [ForeignKey(typeof(M2MClassA)), Column("class_a_id")]
             public int ClassAId { get; set; }
 
             [ForeignKey(typeof(M2MClassB))]
@@ -67,6 +67,7 @@ namespace SQLiteNetExtensions.IntegrationTests
             public int ClassDId { get; set; }
         }
 
+        [Table("class_e")]
         public class M2MClassE
         {
             [PrimaryKey]
@@ -86,11 +87,64 @@ namespace SQLiteNetExtensions.IntegrationTests
             public string Foo { get; set; }
         }
 
+        [Table("class_e_class_f")]
         public class ClassEClassF
         {
             public Guid ClassEId { get; set; }   // ForeignKey attribute not needed, already specified in the ManyToMany relationship
             [ForeignKey(typeof(M2MClassF))]
             public int ClassFId { get; set; }
+        }
+
+        public class M2MClassG
+        {
+            [PrimaryKey, AutoIncrement]
+            public int Id { get; set; }
+
+            public string Name { get; set; }
+
+            [ManyToMany(typeof(ClassGClassG), "ChildId", "Children")]
+            public List<M2MClassG> Parents { get; set; }
+
+            [ManyToMany(typeof(ClassGClassG), "ParentId", "Parents")]
+            public List<M2MClassG> Children { get; set; }
+        }
+
+        [Table("M2MClassG_ClassG")]
+        public class ClassGClassG
+        {
+            [Column("Identifier")]
+            [PrimaryKey, AutoIncrement]
+            public int Id { get; set; }
+
+            [Column("parent_id")]
+            public int ParentId { get; set; }
+            public int ChildId { get; set; }
+        }
+
+        [Table("ClassH")]
+        public class M2MClassH
+        {
+            [Column("_id")]
+            [PrimaryKey, AutoIncrement]
+            public int Id { get; set; }
+
+            public string Name { get; set; }
+
+            [Column("parent_elements")]
+            [ManyToMany(typeof(ClassHClassH), "ChildId", "Children", ReadOnly = true)] // Parents relationship is read only
+            public List<M2MClassH> Parents { get; set; }
+
+            [ManyToMany(typeof(ClassHClassH), "ParentId", "Parents")]
+            public List<M2MClassH> Children { get; set; }
+        }
+
+        public class ClassHClassH
+        {
+            [PrimaryKey, AutoIncrement]
+            public int Id { get; set; }
+
+            public int ParentId { get; set; }
+            public int ChildId { get; set; }
         }
 
 
@@ -628,6 +682,130 @@ namespace SQLiteNetExtensions.IntegrationTests
                 {
                     Assert.IsTrue(foos.Contains(objectD.Foo));
                 }
+            }
+        }
+
+        [Test]
+        public void TestManyToManyCircular() {
+            // In this test we will create a many to many relationship between instances of the same class
+            // including inverse relationship
+
+            // This is the hierarchy that we're going to implement
+            //                      1
+            //                     / \
+            //                   [2] [3]
+            //                  /  \ /  \
+            //                 4    5    6
+            //
+            // To implement it, only relationshipd of objects [2] and [3] are going to be persisted,
+            // the inverse relationships will be discovered automatically
+
+            var conn = new SQLiteConnection(Utils.DatabaseFilePath);
+            conn.DropTable<M2MClassG>();
+            conn.DropTable<ClassGClassG>();
+            conn.CreateTable<M2MClassG>();
+            conn.CreateTable<ClassGClassG>();
+
+            var object1 = new M2MClassG { Name = "Object 1" };
+            var object2 = new M2MClassG { Name = "Object 2" };
+            var object3 = new M2MClassG { Name = "Object 3" };
+            var object4 = new M2MClassG { Name = "Object 4" };
+            var object5 = new M2MClassG { Name = "Object 5" };
+            var object6 = new M2MClassG { Name = "Object 6" };
+
+            var objects = new List<M2MClassG>{ object1, object2, object3, object4, object5, object6 };
+            conn.InsertAll(objects);
+
+            object2.Parents = new List<M2MClassG>{ object1 };
+            object2.Children = new List<M2MClassG>{ object4, object5 };
+            conn.UpdateWithChildren(object2);
+
+            object3.Parents = new List<M2MClassG>{ object1 };
+            object3.Children = new List<M2MClassG>{ object5, object6 };
+            conn.UpdateWithChildren(object3);
+
+            // These relationships are discovered on runtime, assign them to check for correctness below
+            object1.Children = new List<M2MClassG>{ object2, object3 };
+            object4.Parents = new List<M2MClassG>{ object2 };
+            object5.Parents = new List<M2MClassG>{ object2, object3 };
+            object6.Parents = new List<M2MClassG>{ object3 };
+
+            foreach (var expected in objects)
+            {
+                var obtained = conn.GetWithChildren<M2MClassG>(expected.Id);
+
+                Assert.AreEqual(expected.Name, obtained.Name);
+                Assert.AreEqual((expected.Children ?? new List<M2MClassG>()).Count, (obtained.Children ?? new List<M2MClassG>()).Count, obtained.Name);
+                Assert.AreEqual((expected.Parents ?? new List<M2MClassG>()).Count, (obtained.Parents ?? new List<M2MClassG>()).Count, obtained.Name);
+
+                foreach (var child in expected.Children ?? Enumerable.Empty<M2MClassG>())
+                    Assert.IsTrue(obtained.Children.Any(c => c.Id == child.Id && c.Name == child.Name), obtained.Name);
+
+                foreach (var parent in expected.Parents ?? Enumerable.Empty<M2MClassG>())
+                    Assert.IsTrue(obtained.Parents.Any(p => p.Id == parent.Id && p.Name == parent.Name), obtained.Name);
+            }
+        }
+
+        [Test]
+        public void TestManyToManyCircularReadOnly() {
+            // In this test we will create a many to many relationship between instances of the same class
+            // including inverse relationship
+
+            // This is the hierarchy that we're going to implement
+            //                     [1]
+            //                     / \
+            //                   [2] [3]
+            //                  /  \ /  \
+            //                 4    5    6
+            //
+            // To implement it, only children relationshipd of objects [1], [2] and [3] are going to be persisted,
+            // the inverse relationships will be discovered automatically
+
+            var conn = new SQLiteConnection(Utils.DatabaseFilePath);
+            conn.DropTable<M2MClassH>();
+            conn.DropTable<ClassHClassH>();
+            conn.CreateTable<M2MClassH>();
+            conn.CreateTable<ClassHClassH>();
+
+            var object1 = new M2MClassH { Name = "Object 1" };
+            var object2 = new M2MClassH { Name = "Object 2" };
+            var object3 = new M2MClassH { Name = "Object 3" };
+            var object4 = new M2MClassH { Name = "Object 4" };
+            var object5 = new M2MClassH { Name = "Object 5" };
+            var object6 = new M2MClassH { Name = "Object 6" };
+
+            var objects = new List<M2MClassH>{ object1, object2, object3, object4, object5, object6 };
+            conn.InsertAll(objects);
+
+            object1.Children = new List<M2MClassH>{ object2, object3 };
+            conn.UpdateWithChildren(object1);
+
+            object2.Children = new List<M2MClassH>{ object4, object5 };
+            conn.UpdateWithChildren(object2);
+
+            object3.Children = new List<M2MClassH>{ object5, object6 };
+            conn.UpdateWithChildren(object3);
+
+            // These relationships are discovered on runtime, assign them to check for correctness below
+            object2.Parents = new List<M2MClassH>{ object1 };
+            object3.Parents = new List<M2MClassH>{ object1 };
+            object4.Parents = new List<M2MClassH>{ object2 };
+            object5.Parents = new List<M2MClassH>{ object2, object3 };
+            object6.Parents = new List<M2MClassH>{ object3 };
+
+            foreach (var expected in objects)
+            {
+                var obtained = conn.GetWithChildren<M2MClassH>(expected.Id);
+
+                Assert.AreEqual(expected.Name, obtained.Name);
+                Assert.AreEqual((expected.Children ?? new List<M2MClassH>()).Count, (obtained.Children ?? new List<M2MClassH>()).Count, obtained.Name);
+                Assert.AreEqual((expected.Parents ?? new List<M2MClassH>()).Count, (obtained.Parents ?? new List<M2MClassH>()).Count, obtained.Name);
+
+                foreach (var child in expected.Children ?? Enumerable.Empty<M2MClassH>())
+                    Assert.IsTrue(obtained.Children.Any(c => c.Id == child.Id && c.Name == child.Name), obtained.Name);
+
+                foreach (var parent in expected.Parents ?? Enumerable.Empty<M2MClassH>())
+                    Assert.IsTrue(obtained.Parents.Any(p => p.Id == parent.Id && p.Name == parent.Name), obtained.Name);
             }
         }
     }

@@ -13,9 +13,10 @@ namespace SQLiteNetExtensions.IntegrationTests
     [TestFixture]
     public class OneToManyTests
     {
+        [Table("ClassA")]
         public class O2MClassA
         {
-            [PrimaryKey, AutoIncrement]
+            [PrimaryKey, AutoIncrement, Column("PrimaryKey")]
             public int Id { get; set; }
 
             [OneToMany]
@@ -24,12 +25,13 @@ namespace SQLiteNetExtensions.IntegrationTests
             public string Bar { get; set; }
         }
 
+        [Table("ClassB")]
         public class O2MClassB
         {
             [PrimaryKey, AutoIncrement]
             public int Id { get; set; }
 
-            [ForeignKey(typeof (O2MClassA))]
+            [ForeignKey(typeof (O2MClassA)), Column("class_a_id")]
             public int ClassAKey { get; set; }
 
             public string Foo { get; set; }
