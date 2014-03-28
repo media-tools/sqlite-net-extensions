@@ -18,6 +18,24 @@ namespace SQLiteNetExtensions.Extensions
 {
     public static class ReadOperations
     {
+        public static List<T> GetAllWithChildren<T>(this SQLiteConnection conn, Predicate<T> filter = null) where T : new()
+        {
+            var elements = conn.Table<T>();
+            if (filter != null)
+            {
+                elements = elements.Where(x => filter(x));
+            }
+
+            var list = elements.ToList();
+
+            foreach (T element in list)
+            {
+                conn.GetChildren(element);
+            }
+
+            return list;
+        }
+
         // Enable to allow descriptive error descriptions on incorrect relationships
         public static bool EnableRuntimeAssertions = true;
 
