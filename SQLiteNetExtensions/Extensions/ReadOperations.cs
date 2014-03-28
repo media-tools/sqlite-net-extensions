@@ -102,7 +102,7 @@ namespace SQLiteNetExtensions.Extensions
         private static void GetOneToOneChild<T>(this SQLiteConnection conn, T element,
                                                 PropertyInfo relationshipProperty)
         {
-            var type = typeof (T);
+            var type = element.GetType();
             EnclosedType enclosedType;
             var entityType = relationshipProperty.GetEntityType(out enclosedType);
 
@@ -161,7 +161,7 @@ namespace SQLiteNetExtensions.Extensions
         private static void GetManyToOneChild<T>(this SQLiteConnection conn, T element,
                                                  PropertyInfo relationshipProperty)
         {
-            var type = typeof (T);
+            var type = element.GetType();
             EnclosedType enclosedType;
             var entityType = relationshipProperty.GetEntityType(out enclosedType);
 
@@ -191,7 +191,7 @@ namespace SQLiteNetExtensions.Extensions
         private static void GetOneToManyChildren<T>(this SQLiteConnection conn, T element,
                                                     PropertyInfo relationshipProperty)
         {
-            var type = typeof (T);
+            var type = element.GetType();
             EnclosedType enclosedType;
             var entityType = relationshipProperty.GetEntityType(out enclosedType);
 
@@ -253,7 +253,7 @@ namespace SQLiteNetExtensions.Extensions
         private static void GetManyToManyChildren<T>(this SQLiteConnection conn, T element,
                                                      PropertyInfo relationshipProperty)
         {
-            var type = typeof (T);
+            var type = element.GetType();
             EnclosedType enclosedType;
             var entityType = relationshipProperty.GetEntityType(out enclosedType);
 
