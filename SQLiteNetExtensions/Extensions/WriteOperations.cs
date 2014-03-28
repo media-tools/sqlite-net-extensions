@@ -68,7 +68,7 @@ namespace SQLiteNetExtensions.Extensions
         #region Private methods
         private static void RefreshForeignKeys<T>(T element)
         {
-            var type = typeof (T);
+            var type = element.GetType();
             foreach (var relationshipProperty in type.GetRelationshipProperties())
             {
                 var relationshipAttribute = relationshipProperty.GetAttribute<RelationshipAttribute>();
