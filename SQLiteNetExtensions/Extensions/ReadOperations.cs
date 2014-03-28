@@ -54,9 +54,9 @@ namespace SQLiteNetExtensions.Extensions
             return element;
         }
 
-        public static void GetChildren<T>(this SQLiteConnection conn, T element) where T : new()
+        public static void GetChildren<T>(this SQLiteConnection conn, T element) 
         {
-            foreach (var relationshipProperty in typeof (T).GetRelationshipProperties())
+            foreach (var relationshipProperty in element.GetType().GetRelationshipProperties())
             {
                 conn.GetChild(element, relationshipProperty);
             }
@@ -64,7 +64,7 @@ namespace SQLiteNetExtensions.Extensions
 
         public static void GetChild<T>(this SQLiteConnection conn, T element, string relationshipProperty)
         {
-            conn.GetChild(element, typeof (T).GetProperty(relationshipProperty));
+            conn.GetChild(element, element.GetType().GetProperty(relationshipProperty));
         }
 
         public static void GetChild<T>(this SQLiteConnection conn, T element, Expression<Func<T, object>> expression)
