@@ -98,6 +98,7 @@
     <None Include="packages.config" />
     <Compile Include="Tests\Utils.cs" />
     <Compile Include="Tests\DeleteTests.cs" />
+    <None Include="Entitlements.plist" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="Cirrious.CrossCore">
@@ -132,7 +133,7 @@
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>
     <ProjectReference Include="..\SQLiteNetExtensions\SQLiteNetExtensions-MvvmCross.csproj">
-      <Project>{497C97D1-4CC9-4139-A169-D3934D81A9AF}</Project>
+      <Project>{BDB77E2A-C934-48ED-BFA4-45227E029238}</Project>
       <Name>SQLiteNetExtensions-MvvmCross</Name>
     </ProjectReference>
   </ItemGroup>
