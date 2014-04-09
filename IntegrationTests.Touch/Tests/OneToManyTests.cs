@@ -4,8 +4,13 @@ using System.Linq;
 using NUnit.Framework;
 using SQLiteNetExtensions.Attributes;
 using SQLiteNetExtensions.Extensions;
+#if PCL
+using SQLite.Net;
+using SQLite.Net.Attributes;
+#else
 using Cirrious.MvvmCross.Community.Plugins.Sqlite;
 using Community.SQLite;
+#endif
 
 namespace SQLiteNetExtensions.IntegrationTests
 {
@@ -111,7 +116,7 @@ namespace SQLiteNetExtensions.IntegrationTests
         [Test]
         public void TestGetOneToManyList()
         {
-            var conn = new SQLiteConnection(Utils.DatabaseFilePath);
+            var conn = Utils.CreateConnection();
             conn.DropTable<O2MClassA>();
             conn.DropTable<O2MClassB>();
             conn.CreateTable<O2MClassA>();
@@ -170,7 +175,7 @@ namespace SQLiteNetExtensions.IntegrationTests
         [Test]
         public void TestGetOneToManyListWithInverse()
         {
-            var conn = new SQLiteConnection(Utils.DatabaseFilePath);
+            var conn = Utils.CreateConnection();
             conn.DropTable<O2MClassC>();
             conn.DropTable<O2MClassD>();
             conn.CreateTable<O2MClassC>();
@@ -232,7 +237,7 @@ namespace SQLiteNetExtensions.IntegrationTests
         [Test]
         public void TestGetOneToManyArray()
         {
-            var conn = new SQLiteConnection(Utils.DatabaseFilePath);
+            var conn = Utils.CreateConnection();
             conn.DropTable<O2MClassE>();
             conn.DropTable<O2MClassF>();
             conn.CreateTable<O2MClassE>();
@@ -291,7 +296,7 @@ namespace SQLiteNetExtensions.IntegrationTests
         [Test]
         public void TestUpdateSetOneToManyList()
         {
-            var conn = new SQLiteConnection(Utils.DatabaseFilePath);
+            var conn = Utils.CreateConnection();
             conn.DropTable<O2MClassA>();
             conn.DropTable<O2MClassB>();
             conn.CreateTable<O2MClassA>();
@@ -344,7 +349,7 @@ namespace SQLiteNetExtensions.IntegrationTests
         [Test]
         public void TestUpdateUnsetOneToManyEmptyList()
         {
-            var conn = new SQLiteConnection(Utils.DatabaseFilePath);
+            var conn = Utils.CreateConnection();
             conn.DropTable<O2MClassA>();
             conn.DropTable<O2MClassB>();
             conn.CreateTable<O2MClassA>();
@@ -408,7 +413,7 @@ namespace SQLiteNetExtensions.IntegrationTests
         [Test]
         public void TestUpdateUnsetOneToManyNullList()
         {
-            var conn = new SQLiteConnection(Utils.DatabaseFilePath);
+            var conn = Utils.CreateConnection();
             conn.DropTable<O2MClassA>();
             conn.DropTable<O2MClassB>();
             conn.CreateTable<O2MClassA>();
@@ -472,7 +477,7 @@ namespace SQLiteNetExtensions.IntegrationTests
         [Test]
         public void TestUpdateSetOneToManyArray()
         {
-            var conn = new SQLiteConnection(Utils.DatabaseFilePath);
+            var conn = Utils.CreateConnection();
             conn.DropTable<O2MClassE>();
             conn.DropTable<O2MClassF>();
             conn.CreateTable<O2MClassE>();
@@ -526,7 +531,7 @@ namespace SQLiteNetExtensions.IntegrationTests
         [Test]
         public void TestUpdateSetOneToManyListWithInverse()
         {
-            var conn = new SQLiteConnection(Utils.DatabaseFilePath);
+            var conn = Utils.CreateConnection();
             conn.DropTable<O2MClassC>();
             conn.DropTable<O2MClassD>();
             conn.CreateTable<O2MClassC>();
@@ -580,7 +585,7 @@ namespace SQLiteNetExtensions.IntegrationTests
         [Test]
         public void TestGetOneToManyListWithInverseGuidId()
         {
-            var conn = new SQLiteConnection(Utils.DatabaseFilePath);
+            var conn = Utils.CreateConnection();
             conn.DropTable<O2MClassG>();
             conn.DropTable<O2MClassH>();
             conn.CreateTable<O2MClassG>();
@@ -646,7 +651,7 @@ namespace SQLiteNetExtensions.IntegrationTests
         [Test]
         public void TestUpdateSetOneToManyListWithInverseGuidId()
         {
-            var conn = new SQLiteConnection(Utils.DatabaseFilePath);
+            var conn = Utils.CreateConnection();
             conn.DropTable<O2MClassG>();
             conn.DropTable<O2MClassH>();
             conn.CreateTable<O2MClassG>();

@@ -3,6 +3,15 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
+#if PCL
+using SQLite.Net;
+using SQLite.Net.Attributes;
+using SQLite.Net.Platform.XamarinIOS;
+#else
+using Cirrious.MvvmCross.Community.Plugins.Sqlite;
+using Community.SQLite;
+#endif
+
 namespace SQLiteNetExtensions.IntegrationTests
 {
     /// <summary>
@@ -33,6 +42,14 @@ namespace SQLiteNetExtensions.IntegrationTests
                 #endif
                 return path;
             }
+        }
+
+        public static SQLiteConnection CreateConnection() {
+            #if PCL
+            return new SQLiteConnection(new SQLitePlatformIOS(), DatabaseFilePath);
+            #else
+            return new SQLiteConnection(DatabaseFilePath);
+            #endif
         }
     }
 }

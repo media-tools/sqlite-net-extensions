@@ -4,6 +4,8 @@ using SQLiteNetExtensions.Attributes;
 using SQLiteNetExtensions.Extensions.TextBlob.Serializers;
 #if USING_MVVMCROSS
 using SQLiteConnection = Cirrious.MvvmCross.Community.Plugins.Sqlite.ISQLiteConnection;
+#elif PCL
+using SQLite.Net;
 #else
 using SQLite;
 #endif

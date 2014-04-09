@@ -11,6 +11,8 @@
     <AssemblyName>Tests</AssemblyName>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
+    <ProductVersion>12.0.0</ProductVersion>
+    <SchemaVersion>2.0</SchemaVersion>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -69,9 +71,9 @@
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\SQLiteNetExtensions\SQLiteNetExtensions.csproj">
+    <ProjectReference Include="..\SQLiteNetExtensions\SQLiteNetExtensions-PCL.csproj">
       <Project>{F723017D-EDE5-49CC-A84F-881C067C6004}</Project>
-      <Name>SQLiteNetExtensions</Name>
+      <Name>SQLiteNetExtensions-PCL</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

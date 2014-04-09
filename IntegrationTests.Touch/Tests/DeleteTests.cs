@@ -1,10 +1,15 @@
 ﻿using System;
 using NUnit.Framework;
-using Cirrious.MvvmCross.Community.Plugins.Sqlite;
-using Community.SQLite;
 using System.Collections.Generic;
 using SQLiteNetExtensions.Extensions;
 using System.Linq;
+#if PCL
+using SQLite.Net;
+using SQLite.Net.Attributes;
+#else
+using Cirrious.MvvmCross.Community.Plugins.Sqlite;
+using Community.SQLite;
+#endif
 
 namespace SQLiteNetExtensions.IntegrationTests
 {
@@ -34,7 +39,7 @@ namespace SQLiteNetExtensions.IntegrationTests
             // In this test we will create three elements in the database and delete
             // two of them using DeleteAll extension method
 
-            var conn = new SQLiteConnection(Utils.DatabaseFilePath);
+            var conn = Utils.CreateConnection();
             conn.DropTable<DummyClassGuidPK>();
             conn.CreateTable<DummyClassGuidPK>();
 
@@ -82,7 +87,7 @@ namespace SQLiteNetExtensions.IntegrationTests
             // In this test we will create three elements in the database and delete
             // two of them using DeleteAll extension method
 
-            var conn = new SQLiteConnection(Utils.DatabaseFilePath);
+            var conn = Utils.CreateConnection();
             conn.DropTable<DummyClassIntPK>();
             conn.CreateTable<DummyClassIntPK>();
 
@@ -127,7 +132,7 @@ namespace SQLiteNetExtensions.IntegrationTests
             // In this test we will create three elements in the database and delete
             // two of them using DeleteAllIds extension method
 
-            var conn = new SQLiteConnection(Utils.DatabaseFilePath);
+            var conn = Utils.CreateConnection();
             conn.DropTable<DummyClassGuidPK>();
             conn.CreateTable<DummyClassGuidPK>();
 
@@ -176,7 +181,7 @@ namespace SQLiteNetExtensions.IntegrationTests
             // In this test we will create three elements in the database and delete
             // two of them using DeleteAllIds extension method
 
-            var conn = new SQLiteConnection(Utils.DatabaseFilePath);
+            var conn = Utils.CreateConnection();
             conn.DropTable<DummyClassIntPK>();
             conn.CreateTable<DummyClassIntPK>();
 

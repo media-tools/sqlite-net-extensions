@@ -4,8 +4,15 @@ using System.Linq;
 using NUnit.Framework;
 using SQLiteNetExtensions.Attributes;
 using SQLiteNetExtensions.Extensions;
+
+#if PCL
+using SQLite.Net;
+using SQLite.Net.Attributes;
+using SQLite.Net.Platform.XamarinIOS;
+#else
 using Cirrious.MvvmCross.Community.Plugins.Sqlite;
 using Community.SQLite;
+#endif
 
 namespace SQLiteNetExtensions.IntegrationTests
 {
@@ -159,7 +166,7 @@ namespace SQLiteNetExtensions.IntegrationTests
             //          3       -       1, 2, 3
             //          4       -       1, 2, 3, 4
 
-            var conn = new SQLiteConnection(Utils.DatabaseFilePath);
+            var conn = Utils.CreateConnection();
             conn.DropTable<M2MClassA>();
             conn.DropTable<M2MClassB>();
             conn.DropTable<ClassAClassB>();
@@ -264,7 +271,7 @@ namespace SQLiteNetExtensions.IntegrationTests
             //          3       -       1, 2, 3
             //          4       -       1, 2, 3, 4
 
-            var conn = new SQLiteConnection(Utils.DatabaseFilePath);
+            var conn = Utils.CreateConnection();
             conn.DropTable<M2MClassC>();
             conn.DropTable<M2MClassD>();
             conn.DropTable<ClassCClassD>();
@@ -369,7 +376,7 @@ namespace SQLiteNetExtensions.IntegrationTests
             //          3       -       1, 2, 3
             //          4       -       1, 2, 3, 4
 
-            var conn = new SQLiteConnection(Utils.DatabaseFilePath);
+            var conn = Utils.CreateConnection();
             conn.DropTable<M2MClassA>();
             conn.DropTable<M2MClassB>();
             conn.DropTable<ClassAClassB>();
@@ -470,7 +477,7 @@ namespace SQLiteNetExtensions.IntegrationTests
             //          4       -       3, 4
 
 
-            var conn = new SQLiteConnection(Utils.DatabaseFilePath);
+            var conn = Utils.CreateConnection();
             conn.DropTable<M2MClassA>();
             conn.DropTable<M2MClassB>();
             conn.DropTable<ClassAClassB>();
@@ -587,7 +594,7 @@ namespace SQLiteNetExtensions.IntegrationTests
             //          3       -       1, 2, 3
             //          4       -       1, 2, 3, 4
 
-            var conn = new SQLiteConnection(Utils.DatabaseFilePath);
+            var conn = Utils.CreateConnection();
             conn.DropTable<M2MClassE>();
             conn.DropTable<M2MClassF>();
             conn.DropTable<ClassEClassF>();
@@ -700,7 +707,7 @@ namespace SQLiteNetExtensions.IntegrationTests
             // To implement it, only relationshipd of objects [2] and [3] are going to be persisted,
             // the inverse relationships will be discovered automatically
 
-            var conn = new SQLiteConnection(Utils.DatabaseFilePath);
+            var conn = Utils.CreateConnection();
             conn.DropTable<M2MClassG>();
             conn.DropTable<ClassGClassG>();
             conn.CreateTable<M2MClassG>();
@@ -761,7 +768,7 @@ namespace SQLiteNetExtensions.IntegrationTests
             // To implement it, only children relationshipd of objects [1], [2] and [3] are going to be persisted,
             // the inverse relationships will be discovered automatically
 
-            var conn = new SQLiteConnection(Utils.DatabaseFilePath);
+            var conn = Utils.CreateConnection();
             conn.DropTable<M2MClassH>();
             conn.DropTable<ClassHClassH>();
             conn.CreateTable<M2MClassH>();

@@ -2,8 +2,14 @@
 using NUnit.Framework;
 using SQLiteNetExtensions.Attributes;
 using SQLiteNetExtensions.Extensions;
+
+#if PCL
+using SQLite.Net;
+using SQLite.Net.Attributes;
+#else
 using Cirrious.MvvmCross.Community.Plugins.Sqlite;
 using Community.SQLite;
+#endif
 
 namespace SQLiteNetExtensions.IntegrationTests
 {
@@ -35,7 +41,7 @@ namespace SQLiteNetExtensions.IntegrationTests
         [Test]
         public void TestGetManyToOne()
         {
-            var conn = new SQLiteConnection(Utils.DatabaseFilePath);
+            var conn = Utils.CreateConnection();
             conn.DropTable<M2OClassA>();
             conn.DropTable<M2OClassB>();
             conn.CreateTable<M2OClassA>();
@@ -73,7 +79,7 @@ namespace SQLiteNetExtensions.IntegrationTests
         [Test]
         public void TestUpdateSetManyToOne()
         {
-            var conn = new SQLiteConnection(Utils.DatabaseFilePath);
+            var conn = Utils.CreateConnection();
             conn.DropTable<M2OClassA>();
             conn.DropTable<M2OClassB>();
             conn.CreateTable<M2OClassA>();
@@ -106,7 +112,7 @@ namespace SQLiteNetExtensions.IntegrationTests
         [Test]
         public void TestUpdateUnsetManyToOne()
         {
-            var conn = new SQLiteConnection(Utils.DatabaseFilePath);
+            var conn = Utils.CreateConnection();
             conn.DropTable<M2OClassA>();
             conn.DropTable<M2OClassB>();
             conn.CreateTable<M2OClassA>();

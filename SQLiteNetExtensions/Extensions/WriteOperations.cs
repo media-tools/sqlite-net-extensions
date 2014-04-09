@@ -9,6 +9,9 @@ using SQLiteNetExtensions.Exceptions;
 
 #if USING_MVVMCROSS
 using SQLiteConnection = Cirrious.MvvmCross.Community.Plugins.Sqlite.ISQLiteConnection;
+#elif PCL
+using SQLite.Net;
+using SQLite.Net.Attributes;
 #else
 using SQLite;
 #endif
