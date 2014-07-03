@@ -21,12 +21,12 @@ namespace SQLiteNetExtensions.Extensions
 {
     public static class ReadOperations
     {
-        public static List<T> GetAllWithChildren<T>(this SQLiteConnection conn, Predicate<T> filter = null) where T : new()
+        public static List<T> GetAllWithChildren<T>(this SQLiteConnection conn, Expression<Func<T, bool>> filter = null) where T : new()
         {
             var elements = conn.Table<T>();
             if (filter != null)
             {
-                elements = elements.Where(x => filter(x));
+                elements = elements.Where(filter);
             }
 
             var list = elements.ToList();

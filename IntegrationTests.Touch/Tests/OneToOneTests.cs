@@ -2,6 +2,9 @@
 using NUnit.Framework;
 using SQLiteNetExtensions.Attributes;
 using SQLiteNetExtensions.Extensions;
+using System.Linq;
+
+
 #if PCL
 using SQLite.Net;
 using SQLite.Net.Attributes;
@@ -429,6 +432,83 @@ namespace SQLiteNetExtensions.IntegrationTests
             // Fetch the relationship
             var newObjectA = conn.Get<O2OClassE>(objectE.Id);
             Assert.AreEqual(0, newObjectA.ObjectFKey, "Foreign key should have been refreshed in database");
+        }
+
+        [Test]
+        public void TestGetAllNoFilter() {
+            var conn = Utils.CreateConnection();
+            conn.DropTable<O2OClassA>();
+            conn.DropTable<O2OClassB>();
+            conn.CreateTable<O2OClassA>();
+            conn.CreateTable<O2OClassB>();
+
+            var a1 = new O2OClassA();
+            var a2 = new O2OClassA();
+            var a3 = new O2OClassA();
+            var aObjects = new []{ a1, a2, a3 };
+            conn.InsertAll(aObjects);
+
+            var b1 = new O2OClassB{ Foo = "Foo 1" };
+            var b2 = new O2OClassB{ Foo = "Foo 2" };
+            var b3 = new O2OClassB{ Foo = "Foo 3" };
+            var bObjects = new []{ b1, b2, b3 };
+            conn.InsertAll(bObjects);
+
+            a1.OneClassB = b1;
+            a2.OneClassB = b2;
+            a3.OneClassB = b3;
+            conn.UpdateWithChildren(a1);
+            conn.UpdateWithChildren(a2);
+            conn.UpdateWithChildren(a3);
+
+            var aElements = conn.GetAllWithChildren<O2OClassA>().OrderBy(a => a.Id).ToArray();
+            Assert.AreEqual(aObjects.Length, aElements.Length);
+            for (int i = 0; i < aObjects.Length; i++) {
+                Assert.AreEqual(aObjects[i].Id, aElements[i].Id);
+                Assert.AreEqual(aObjects[i].OneClassB.Id, aElements[i].OneClassB.Id);
+                Assert.AreEqual(aObjects[i].OneClassB.Foo, aElements[i].OneClassB.Foo);
+            }
+
+        }
+
+        [Test]
+        public void TestGetAllFilter() {
+            var conn = Utils.CreateConnection();
+            conn.DropTable<O2OClassC>();
+            conn.DropTable<O2OClassD>();
+            conn.CreateTable<O2OClassC>();
+            conn.CreateTable<O2OClassD>();
+
+            var c1 = new O2OClassC { Bar = "Bar 1" };
+            var c2 = new O2OClassC { Bar = "Foo 2" };
+            var c3 = new O2OClassC { Bar = "Bar 3" };
+            var cObjects = new []{ c1, c2, c3 };
+            conn.InsertAll(cObjects);
+
+            var d1 = new O2OClassD{ Foo = "Foo 1" };
+            var d2 = new O2OClassD{ Foo = "Foo 2" };
+            var d3 = new O2OClassD{ Foo = "Foo 3" };
+            var bObjects = new []{ d1, d2, d3 };
+            conn.InsertAll(bObjects);
+
+            c1.ElementD = d1;
+            c2.ElementD = d2;
+            c3.ElementD = d3;
+            conn.UpdateWithChildren(c1);
+            conn.UpdateWithChildren(c2);
+            conn.UpdateWithChildren(c3);
+
+            var expectedCObjects = cObjects.Where(c => c.Bar.Contains("Bar")).ToArray();
+            var cElements = conn.GetAllWithChildren<O2OClassC>(c => c.Bar.Contains("Bar"))
+                .OrderBy(a => a.ClassId).ToArray();
+
+            Assert.AreEqual(expectedCObjects.Length, cElements.Length);
+            for (int i = 0; i < expectedCObjects.Length; i++) {
+                Assert.AreEqual(expectedCObjects[i].ClassId, cElements[i].ClassId);
+                Assert.AreEqual(expectedCObjects[i].ElementD.Id, cElements[i].ElementD.Id);
+                Assert.AreEqual(expectedCObjects[i].ElementD.Foo, cElements[i].ElementD.Foo);
+            }
+
         }
     }
 }
