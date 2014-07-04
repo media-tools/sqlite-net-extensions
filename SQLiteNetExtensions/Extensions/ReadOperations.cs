@@ -21,7 +21,9 @@ namespace SQLiteNetExtensions.Extensions
 {
     public static class ReadOperations
     {
-        public static List<T> GetAllWithChildren<T>(this SQLiteConnection conn, Expression<Func<T, bool>> filter = null) where T : new()
+
+        #region Public API
+        public static List<T> GetAllWithChildren<T>(this SQLiteConnection conn, Expression<Func<T, bool>> filter = null, bool recursive = false) where T : new()
         {
             var elements = conn.Table<T>();
             if (filter != null)
@@ -33,7 +35,7 @@ namespace SQLiteNetExtensions.Extensions
 
             foreach (T element in list)
             {
-                conn.GetChildren(element);
+                conn.GetChildren(element, recursive);
             }
 
             return list;
@@ -42,58 +44,74 @@ namespace SQLiteNetExtensions.Extensions
         // Enable to allow descriptive error descriptions on incorrect relationships
         public static bool EnableRuntimeAssertions = true;
 
-        public static T GetWithChildren<T>(this SQLiteConnection conn, object pk) where T : new()
+        public static T GetWithChildren<T>(this SQLiteConnection conn, object pk, bool recursive = false) where T : new()
         {
             var element = conn.Get<T>(pk);
-            conn.GetChildren(element);
+            conn.GetChildren(element, recursive);
             return element;
         }
 
-        public static T FindWithChildren<T>(this SQLiteConnection conn, object pk) where T : new()
+        public static T FindWithChildren<T>(this SQLiteConnection conn, object pk, bool recursive = false) where T : new()
         {
             var element = conn.Find<T>(pk);
             if (!EqualityComparer<T>.Default.Equals(element, default(T)))
-                conn.GetChildren(element);
+                conn.GetChildren(element, recursive);
             return element;
         }
 
-        public static void GetChildren<T>(this SQLiteConnection conn, T element) 
+        public static void GetChildren<T>(this SQLiteConnection conn, T element, bool recursive = false) 
         {
+            GetChildrenRecursive(conn, element, false, recursive);
+        }
+
+        public static void GetChild<T>(this SQLiteConnection conn, T element, string relationshipProperty, bool recursive = false)
+        {
+            conn.GetChild(element, element.GetType().GetProperty(relationshipProperty), recursive);
+        }
+
+        public static void GetChild<T>(this SQLiteConnection conn, T element, Expression<Func<T, object>> expression, bool recursive = false)
+        {
+            conn.GetChild(element, ReflectionExtensions.GetProperty(expression), recursive);
+        }
+
+        public static void GetChild<T>(this SQLiteConnection conn, T element, PropertyInfo relationshipProperty, bool recursive = false)
+        {
+            conn.GetChildRecursive(element, relationshipProperty, recursive, new Dictionary<string, Dictionary<object, object>>());
+        }
+
+        #endregion
+
+        #region Private methods
+        private static void GetChildrenRecursive(this SQLiteConnection conn, object element, bool onlyCascadeChildren, bool recursive, Dictionary<string, Dictionary<object, object>> objectCache =  null) {
+            objectCache = objectCache ?? new Dictionary<string, Dictionary<object, object>>();
+
             foreach (var relationshipProperty in element.GetType().GetRelationshipProperties())
             {
-                conn.GetChild(element, relationshipProperty);
+                var relationshipAttribute = relationshipProperty.GetAttribute<RelationshipAttribute>();
+                if (!onlyCascadeChildren || relationshipAttribute.IsCascadeRead)
+                    conn.GetChildRecursive(element, relationshipProperty, recursive, objectCache);
             }
         }
 
-        public static void GetChild<T>(this SQLiteConnection conn, T element, string relationshipProperty)
-        {
-            conn.GetChild(element, element.GetType().GetProperty(relationshipProperty));
-        }
-
-        public static void GetChild<T>(this SQLiteConnection conn, T element, Expression<Func<T, object>> expression)
-        {
-            conn.GetChild(element, ReflectionExtensions.GetProperty(expression));
-        }
-
-        public static void GetChild<T>(this SQLiteConnection conn, T element, PropertyInfo relationshipProperty)
-        {
+        private static void GetChildRecursive(this SQLiteConnection conn, object element, PropertyInfo relationshipProperty, bool recursive, Dictionary<string, Dictionary<object, object>> objectCache) {
+        
             var relationshipAttribute = relationshipProperty.GetAttribute<RelationshipAttribute>();
 
             if (relationshipAttribute is OneToOneAttribute)
             {
-                conn.GetOneToOneChild(element, relationshipProperty);
+                conn.GetOneToOneChild(element, relationshipProperty, recursive, objectCache);
             }
             else if (relationshipAttribute is OneToManyAttribute)
             {
-                conn.GetOneToManyChildren(element, relationshipProperty);
+                conn.GetOneToManyChildren(element, relationshipProperty, recursive, objectCache);
             }
             else if (relationshipAttribute is ManyToOneAttribute)
             {
-                conn.GetManyToOneChild(element, relationshipProperty);
+                conn.GetManyToOneChild(element, relationshipProperty, recursive, objectCache);
             }
             else if (relationshipAttribute is ManyToManyAttribute)
             {
-                conn.GetManyToManyChildren(element, relationshipProperty);
+                conn.GetManyToManyChildren(element, relationshipProperty, recursive, objectCache);
             }
             else if (relationshipAttribute is TextBlobAttribute)
             {
@@ -101,9 +119,9 @@ namespace SQLiteNetExtensions.Extensions
             }
         }
 
-        #region Private methods
-        private static void GetOneToOneChild<T>(this SQLiteConnection conn, T element,
-                                                PropertyInfo relationshipProperty)
+        private static object GetOneToOneChild<T>(this SQLiteConnection conn, T element,
+            PropertyInfo relationshipProperty, 
+            bool recursive, Dictionary<string, Dictionary<object, object>> objectCache =  null)
         {
             var type = element.GetType();
             EnclosedType enclosedType;
@@ -158,11 +176,14 @@ namespace SQLiteNetExtensions.Extensions
             {
                 inverseProperty.SetValue(value, element, null);
             }
+
+            return value;
         }
 
 
-        private static void GetManyToOneChild<T>(this SQLiteConnection conn, T element,
-                                                 PropertyInfo relationshipProperty)
+        private static object GetManyToOneChild<T>(this SQLiteConnection conn, T element,
+            PropertyInfo relationshipProperty, 
+            bool recursive, Dictionary<string, Dictionary<object, object>> objectCache =  null)
         {
             var type = element.GetType();
             EnclosedType enclosedType;
@@ -189,10 +210,12 @@ namespace SQLiteNetExtensions.Extensions
 
             relationshipProperty.SetValue(element, value, null);
 
+            return value;
         }
 
-        private static void GetOneToManyChildren<T>(this SQLiteConnection conn, T element,
-                                                    PropertyInfo relationshipProperty)
+        private static IEnumerable GetOneToManyChildren<T>(this SQLiteConnection conn, T element,
+            PropertyInfo relationshipProperty, 
+            bool recursive, Dictionary<string, Dictionary<object, object>> objectCache =  null)
         {
             var type = element.GetType();
             EnclosedType enclosedType;
@@ -251,10 +274,13 @@ namespace SQLiteNetExtensions.Extensions
                     inverseProperty.SetValue(value, element, null);
                 }
             }
+
+            return values;
         }
 
-        private static void GetManyToManyChildren<T>(this SQLiteConnection conn, T element,
-                                                     PropertyInfo relationshipProperty)
+        private static IEnumerable GetManyToManyChildren<T>(this SQLiteConnection conn, T element,
+            PropertyInfo relationshipProperty, 
+            bool recursive, Dictionary<string, Dictionary<object, object>> objectCache =  null)
         {
             var type = element.GetType();
             EnclosedType enclosedType;
@@ -313,6 +339,7 @@ namespace SQLiteNetExtensions.Extensions
 
             relationshipProperty.SetValue(element, values, null);
 
+            return values;
         }
             
         static void Assert(bool assertion, Type type, PropertyInfo property, string message) {

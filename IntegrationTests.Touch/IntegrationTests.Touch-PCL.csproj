@@ -9,8 +9,6 @@
     <RootNamespace>IntegrationTests.Touch</RootNamespace>
     <IPhoneResourcePrefix>Resources</IPhoneResourcePrefix>
     <AssemblyName>IntegrationTestsTouch</AssemblyName>
-    <ProductVersion>12.0.0</ProductVersion>
-    <SchemaVersion>2.0</SchemaVersion>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|iPhoneSimulator' ">
     <DebugSymbols>true</DebugSymbols>
@@ -101,6 +99,8 @@
     <Compile Include="Tests\Utils.cs" />
     <Compile Include="Tests\DeleteTests.cs" />
     <None Include="Entitlements.plist" />
+    <Compile Include="Tests\RecursiveReadTests.cs" />
+    <Compile Include="Tests\RecursiveWriteTests.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\SQLiteNetExtensions\SQLiteNetExtensions-PCL.csproj">
