@@ -19,10 +19,24 @@ using SQLite;
 
 namespace SQLiteNetExtensions.Extensions
 {
+    using ObjectCache = Dictionary<string, Dictionary<object, object>>;
+
     public static class ReadOperations
     {
 
         #region Public API
+        /// <summary>
+        /// Fetches all the entities of the specified type with the filter and fetches all the relationship
+        /// properties of all the returned elements.
+        /// </summary>
+        /// <returns>List of all the elements of the type T that matches the filter with the children already loaded</returns>
+        /// <param name="conn">Conn.</param>
+        /// <param name="filter">Filter that will be passed to the <c>Where</c> clause when fetching
+        /// objects from the database. No relationship properties are allowed in this filter as they
+        /// are loaded afterwards</param>
+        /// <param name="recursive">If set to <c>true</c> all the relationships with
+        /// <c>CascadeOperation.CascadeRead</c> will be loaded recusively.</param>
+        /// <typeparam name="T">Entity type where the object should be fetched from</typeparam>
         public static List<T> GetAllWithChildren<T>(this SQLiteConnection conn, Expression<Func<T, bool>> filter = null, bool recursive = false) where T : new()
         {
             var elements = conn.Table<T>();
@@ -40,10 +54,24 @@ namespace SQLiteNetExtensions.Extensions
 
             return list;
         }
-
-        // Enable to allow descriptive error descriptions on incorrect relationships
+            
+        /// <summary>
+        /// Enable to allow descriptive error descriptions on incorrect relationships. Enabled by default.
+        /// Disable for production environments to remove the checks and reduce performance penalty
+        /// </summary>
         public static bool EnableRuntimeAssertions = true;
 
+        /// <summary>
+        /// Obtains the object from the database and fetch all the properties annotated with
+        /// any subclass of <c>RelationshipAttribute</c>. If the object with the specified primary key doesn't
+        /// exist in the database, an exception will be raised.
+        /// </summary>
+        /// <returns>The object with all the children loaded</returns>
+        /// <param name="conn">SQLite Net connection object</param>
+        /// <param name="pk">Primary key for the object to search in the database</param>
+        /// <param name="recursive">If set to <c>true</c> all the relationships with
+        /// <c>CascadeOperation.CascadeRead</c> will be loaded recusively.</param>
+        /// <typeparam name="T">Entity type where the object should be fetched from</typeparam>
         public static T GetWithChildren<T>(this SQLiteConnection conn, object pk, bool recursive = false) where T : new()
         {
             var element = conn.Get<T>(pk);
@@ -51,6 +79,19 @@ namespace SQLiteNetExtensions.Extensions
             return element;
         }
 
+        /// <summary>
+        /// The behavior is the same that <c>GetWithChildren</c> but it returns null if the object doesn't
+        /// exist in the database instead of throwing an exception
+        /// Obtains the object from the database and fetch all the properties annotated with
+        /// any subclass of <c>RelationshipAttribute</c>. If the object with the specified primary key doesn't
+        /// exist in the database, it will return null
+        /// </summary>
+        /// <returns>The object with all the children loaded or null if it doesn't exist</returns>
+        /// <param name="conn">SQLite Net connection object</param>
+        /// <param name="pk">Primary key for the object to search in the database</param>
+        /// <param name="recursive">If set to <c>true</c> all the relationships with
+        /// <c>CascadeOperation.CascadeRead</c> will be loaded recusively.</param>
+        /// <typeparam name="T">Entity type where the object should be fetched from</typeparam>
         public static T FindWithChildren<T>(this SQLiteConnection conn, object pk, bool recursive = false) where T : new()
         {
             var element = conn.Find<T>(pk);
@@ -76,14 +117,14 @@ namespace SQLiteNetExtensions.Extensions
 
         public static void GetChild<T>(this SQLiteConnection conn, T element, PropertyInfo relationshipProperty, bool recursive = false)
         {
-            conn.GetChildRecursive(element, relationshipProperty, recursive, new Dictionary<string, Dictionary<object, object>>());
+            conn.GetChildRecursive(element, relationshipProperty, recursive, new ObjectCache());
         }
 
         #endregion
 
         #region Private methods
-        private static void GetChildrenRecursive(this SQLiteConnection conn, object element, bool onlyCascadeChildren, bool recursive, Dictionary<string, Dictionary<object, object>> objectCache =  null) {
-            objectCache = objectCache ?? new Dictionary<string, Dictionary<object, object>>();
+        private static void GetChildrenRecursive(this SQLiteConnection conn, object element, bool onlyCascadeChildren, bool recursive, ObjectCache objectCache =  null) {
+            objectCache = objectCache ?? new ObjectCache();
 
             foreach (var relationshipProperty in element.GetType().GetRelationshipProperties())
             {
@@ -93,7 +134,7 @@ namespace SQLiteNetExtensions.Extensions
             }
         }
 
-        private static void GetChildRecursive(this SQLiteConnection conn, object element, PropertyInfo relationshipProperty, bool recursive, Dictionary<string, Dictionary<object, object>> objectCache) {
+        private static void GetChildRecursive(this SQLiteConnection conn, object element, PropertyInfo relationshipProperty, bool recursive, ObjectCache objectCache) {
         
             var relationshipAttribute = relationshipProperty.GetAttribute<RelationshipAttribute>();
 
@@ -121,7 +162,7 @@ namespace SQLiteNetExtensions.Extensions
 
         private static object GetOneToOneChild<T>(this SQLiteConnection conn, T element,
             PropertyInfo relationshipProperty, 
-            bool recursive, Dictionary<string, Dictionary<object, object>> objectCache =  null)
+            bool recursive, ObjectCache objectCache)
         {
             var type = element.GetType();
             EnclosedType enclosedType;
@@ -150,12 +191,19 @@ namespace SQLiteNetExtensions.Extensions
             var inverseProperty = type.GetInverseProperty(relationshipProperty);
 
             object value = null;
+            var isLoadedFromCache = false;
             if (hasForeignKey)
             {
                 var foreignKeyValue = currentEntityForeignKeyProperty.GetValue(element, null);
                 if (foreignKeyValue != null)
                 {
-                    value = conn.Find(foreignKeyValue, tableMapping);
+                    // Try to load from cache when possible
+                    if (recursive)
+                        value = GetObjectFromCache(entityType, foreignKeyValue, objectCache);
+                    if (value == null)
+                        value = conn.Find(foreignKeyValue, tableMapping);
+                    else
+                        isLoadedFromCache = true;
                 }
             }
             else
@@ -168,6 +216,18 @@ namespace SQLiteNetExtensions.Extensions
                     value = conn.Query(tableMapping, query, primaryKeyValue).FirstOrDefault();
                         // Its a OneToOne, take only the first
                 }
+
+                // Try to replace the loaded entity with the same object from the cache whenever possible
+                if (recursive && value != null)
+                {
+                    var otherEntityPrimaryKeyValue = otherEntityPrimaryKeyProperty.GetValue(value, null);
+                    var cacheValue = GetObjectFromCache(entityType, otherEntityPrimaryKeyValue, objectCache);
+                    if (cacheValue != null)
+                    {
+                        value = cacheValue;
+                        isLoadedFromCache = true;
+                    }
+                }
             }
 
             relationshipProperty.SetValue(element, value, null);
@@ -177,13 +237,19 @@ namespace SQLiteNetExtensions.Extensions
                 inverseProperty.SetValue(value, element, null);
             }
 
+            if (value != null && !isLoadedFromCache && recursive)
+            {
+                SaveObjectToCache(value, otherEntityPrimaryKeyProperty.GetValue(value, null), objectCache);
+                conn.GetChildrenRecursive(value, true, recursive, objectCache);
+            }
+
             return value;
         }
 
 
         private static object GetManyToOneChild<T>(this SQLiteConnection conn, T element,
             PropertyInfo relationshipProperty, 
-            bool recursive, Dictionary<string, Dictionary<object, object>> objectCache =  null)
+            bool recursive, ObjectCache objectCache)
         {
             var type = element.GetType();
             EnclosedType enclosedType;
@@ -202,20 +268,33 @@ namespace SQLiteNetExtensions.Extensions
             Assert(tableMapping != null, type, relationshipProperty,  "There's no mapping table for OneToMany relationship destination");
 
             object value = null;
+            var isLoadedFromCache = false;
             var foreignKeyValue = currentEntityForeignKeyProperty.GetValue(element, null);
             if (foreignKeyValue != null)
             {
-                value = conn.Find(foreignKeyValue, tableMapping);
+                // Try to load from cache when possible
+                if (recursive)
+                    value = GetObjectFromCache(entityType, foreignKeyValue, objectCache);
+                if (value == null)
+                    value = conn.Find(foreignKeyValue, tableMapping);
+                else
+                    isLoadedFromCache = true;
             }
 
             relationshipProperty.SetValue(element, value, null);
+
+            if (value != null && !isLoadedFromCache && recursive)
+            {
+                SaveObjectToCache(value, otherEntityPrimaryKeyProperty.GetValue(value, null), objectCache);
+                conn.GetChildrenRecursive(value, true, recursive, objectCache);
+            }
 
             return value;
         }
 
         private static IEnumerable GetOneToManyChildren<T>(this SQLiteConnection conn, T element,
             PropertyInfo relationshipProperty, 
-            bool recursive, Dictionary<string, Dictionary<object, object>> objectCache =  null)
+            bool recursive, ObjectCache objectCache)
         {
             var type = element.GetType();
             EnclosedType enclosedType;
@@ -280,7 +359,7 @@ namespace SQLiteNetExtensions.Extensions
 
         private static IEnumerable GetManyToManyChildren<T>(this SQLiteConnection conn, T element,
             PropertyInfo relationshipProperty, 
-            bool recursive, Dictionary<string, Dictionary<object, object>> objectCache =  null)
+            bool recursive, ObjectCache objectCache)
         {
             var type = element.GetType();
             EnclosedType enclosedType;
@@ -347,6 +426,32 @@ namespace SQLiteNetExtensions.Extensions
                 throw new IncorrectRelationshipException(type.Name, property.Name, message);
 
         }
+
+        static object GetObjectFromCache(Type objectType, object primaryKey, ObjectCache objectCache) {
+            if (objectCache == null)
+                return null;
+
+            var typeName = objectType.FullName;
+            var typeDict = objectCache[typeName];
+
+            return typeDict != null ? typeDict[primaryKey] : null;
+        }
+
+        static void SaveObjectToCache(object element, object primaryKey, ObjectCache objectCache) {
+            if (objectCache == null || primaryKey == null || element == null)
+                return;
+
+            var typeName = element.GetType().FullName;
+            var typeDict = objectCache[typeName];
+            if (typeDict == null)
+            {
+                typeDict = new Dictionary<object, object>();
+                objectCache[typeName] = typeDict;
+            }
+
+            typeDict[primaryKey] = element;
+        }
+
         #endregion
     }
 }
