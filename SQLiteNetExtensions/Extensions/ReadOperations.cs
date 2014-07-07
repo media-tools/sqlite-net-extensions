@@ -218,16 +218,7 @@ namespace SQLiteNetExtensions.Extensions
                 }
 
                 // Try to replace the loaded entity with the same object from the cache whenever possible
-                if (recursive && value != null)
-                {
-                    var otherEntityPrimaryKeyValue = otherEntityPrimaryKeyProperty.GetValue(value, null);
-                    var cacheValue = GetObjectFromCache(entityType, otherEntityPrimaryKeyValue, objectCache);
-                    if (cacheValue != null)
-                    {
-                        value = cacheValue;
-                        isLoadedFromCache = true;
-                    }
-                }
+                value = recursive ? ReplaceWithCacheObjectIfPossible(value, otherEntityPrimaryKeyProperty, objectCache, out isLoadedFromCache) : value;
             }
 
             relationshipProperty.SetValue(element, value, null);
@@ -309,37 +300,46 @@ namespace SQLiteNetExtensions.Extensions
             Assert(otherEntityForeignKeyProperty != null, type, relationshipProperty, 
                          "OneToMany relationship destination must have Foreign Key to the origin class");
 
+            var otherEntityPrimaryKeyProperty = entityType.GetPrimaryKey();
+
             var tableMapping = conn.GetMapping(entityType);
             Assert(tableMapping != null, type, relationshipProperty,  "There's no mapping table for OneToMany relationship destination");
 
             var inverseProperty = type.GetInverseProperty(relationshipProperty);
 
-            IEnumerable values = null;
+            IList cascadeElements = new List<object>();
+            IList values = null;
             var primaryKeyValue = currentEntityPrimaryKeyProperty.GetValue(element, null);
             if (primaryKeyValue != null)
             {
                 var query = string.Format("select * from {0} where {1} = ?", entityType.GetTableName(),
                     otherEntityForeignKeyProperty.GetColumnName());
                 var queryResults = conn.Query(tableMapping, query, primaryKeyValue);
+
+                Array array = null;
+
+                // Create a generic list of the expected type
                 if (enclosedType == EnclosedType.List)
-                {
-                    // Create a generic list of the expected type
-                    var list = (IList) Activator.CreateInstance(typeof (List<>).MakeGenericType(entityType));
-                    foreach (var result in queryResults)
-                    {
-                        list.Add(result);
-                    }
-                    values = list;
-                }
+                    values = (IList) Activator.CreateInstance(typeof (List<>).MakeGenericType(entityType));
                 else
+                    values = array = Array.CreateInstance(entityType, queryResults.Count);
+                    
+                int i = 0;
+                foreach (var result in queryResults)
                 {
-                    // Create a generic list of the expected type
-                    var array = Array.CreateInstance(entityType, queryResults.Count);
-                    for (var i = 0; i < queryResults.Count; i++)
-                    {
-                        array.SetValue(queryResults[i], i);
-                    }
-                    values = array;
+                    // Replace obtained value with a cached one whenever possible
+                    bool loadedFromCache = false;
+                    var value = recursive ? ReplaceWithCacheObjectIfPossible(result, otherEntityPrimaryKeyProperty, objectCache, out loadedFromCache) : result;
+
+                    if (array != null)
+                        array.SetValue(value, i);
+                    else
+                        values.Add(value);
+
+                    if (!loadedFromCache)
+                        cascadeElements.Add(result);
+
+                    i++;
                 }
             }
 
@@ -351,6 +351,14 @@ namespace SQLiteNetExtensions.Extensions
                 foreach (var value in values)
                 {
                     inverseProperty.SetValue(value, element, null);
+                }
+            }
+
+            if (recursive)
+            {
+                foreach (var child in cascadeElements)
+                {
+                    conn.GetChildrenRecursive(child, true, recursive, objectCache);
                 }
             }
 
@@ -381,7 +389,8 @@ namespace SQLiteNetExtensions.Extensions
             Assert(otherEntityForeignKeyProperty != null, type, relationshipProperty,  "ManyToMany relationship destination must have a foreign key defined in the intermediate type");
             Assert(tableMapping != null, type, relationshipProperty,  "There's no mapping table defined for ManyToMany relationship origin");
 
-            IEnumerable values = null;
+            IList cascadeElements = new List<object>();
+            IList values = null;
             var primaryKeyValue = currentEntityPrimaryKeyProperty.GetValue(element, null);
             if (primaryKeyValue != null)
             {
@@ -394,33 +403,73 @@ namespace SQLiteNetExtensions.Extensions
 
                 var queryResults = conn.Query(tableMapping, query, primaryKeyValue);
 
+                Array array = null;
+
+                // Create a generic list of the expected type
                 if (enclosedType == EnclosedType.List)
-                {
-                    // Create a generic list of the expected type
-                    var list = (IList) Activator.CreateInstance(typeof (List<>).MakeGenericType(entityType));
-                    foreach (var result in queryResults)
-                    {
-                        list.Add(result);
-                    }
-                    values = list;
-                }
+                    values = (IList) Activator.CreateInstance(typeof (List<>).MakeGenericType(entityType));
                 else
+                    values = array = Array.CreateInstance(entityType, queryResults.Count);
+                    
+                int i = 0;
+                foreach (var result in queryResults)
                 {
-                    // Create a generic list of the expected type
-                    var array = Array.CreateInstance(entityType, queryResults.Count);
-                    for (var i = 0; i < queryResults.Count; i++)
-                    {
-                        array.SetValue(queryResults[i], i);
-                    }
-                    values = array;
+                    // Replace obtained value with a cached one whenever possible
+                    bool loadedFromCache = false;
+                    var value = recursive ? ReplaceWithCacheObjectIfPossible(result, otherEntityPrimaryKeyProperty, objectCache, out loadedFromCache) : result;
+
+                    if (array != null)
+                        array.SetValue(value, i);
+                    else
+                        values.Add(value);
+
+                    if (!loadedFromCache)
+                        cascadeElements.Add(result);
+
+                    i++;
                 }
             }
 
             relationshipProperty.SetValue(element, values, null);
 
+            if (recursive)
+            {
+                foreach (var child in cascadeElements)
+                {
+                    conn.GetChildrenRecursive(child, true, recursive, objectCache);
+                }
+            }
+
             return values;
         }
             
+        static object ReplaceWithCacheObjectIfPossible(object element, PropertyInfo primaryKeyProperty, ObjectCache objectCache, out bool isLoadedFromCache) {
+            isLoadedFromCache = false;
+            if (element == null || primaryKeyProperty == null || objectCache == null)
+                return element;
+
+            object primaryKey = null;
+            primaryKey = primaryKeyProperty.GetValue(element, null);
+
+            if (primaryKey == null)
+                return element;
+
+            var cachedElement = GetObjectFromCache(element.GetType(), primaryKey, objectCache);
+            object result;
+            if (cachedElement != null)
+            {
+                result = cachedElement;
+                isLoadedFromCache = true;
+            }
+            else
+            {
+                result = element;
+                SaveObjectToCache(element, primaryKey, objectCache);
+            }
+
+            return result;
+        }
+
         static void Assert(bool assertion, Type type, PropertyInfo property, string message) {
             if (EnableRuntimeAssertions && !assertion)
                 throw new IncorrectRelationshipException(type.Name, property.Name, message);
