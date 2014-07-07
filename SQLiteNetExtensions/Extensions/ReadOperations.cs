@@ -481,9 +481,14 @@ namespace SQLiteNetExtensions.Extensions
                 return null;
 
             var typeName = objectType.FullName;
-            var typeDict = objectCache[typeName];
+            Dictionary<object, object> typeDict = null;
+            object value = null;
+            if (objectCache.TryGetValue(typeName, out typeDict))
+            {
+                typeDict.TryGetValue(primaryKey, out value);
+            }
 
-            return typeDict != null ? typeDict[primaryKey] : null;
+            return value;
         }
 
         static void SaveObjectToCache(object element, object primaryKey, ObjectCache objectCache) {
@@ -491,8 +496,8 @@ namespace SQLiteNetExtensions.Extensions
                 return;
 
             var typeName = element.GetType().FullName;
-            var typeDict = objectCache[typeName];
-            if (typeDict == null)
+            Dictionary<object, object> typeDict = null;
+            if (!objectCache.TryGetValue(typeName, out typeDict))
             {
                 typeDict = new Dictionary<object, object>();
                 objectCache[typeName] = typeDict;
