@@ -22,9 +22,18 @@ namespace SQLiteNetExtensions.Extensions
 {
     public static class WriteOperations
     {
-        // Enable to allow descriptive error descriptions on incorrect relationships
+        /// <summary>
+        /// Enable to allow descriptive error descriptions on incorrect relationships. Enabled by default.
+        /// Disable for production environments to remove the checks and reduce performance penalty
+        /// </summary>
         public static bool EnableRuntimeAssertions = true;
 
+        /// <summary>
+        /// Updates the with children.
+        /// </summary>
+        /// <param name="conn">SQLite Net connection object</param>
+        /// <param name="element">Element.</param>
+        /// <typeparam name="T">The 1st type parameter.</typeparam>
         public static void UpdateWithChildren<T>(this SQLiteConnection conn, T element)
         {
             // Update the current element
@@ -39,6 +48,7 @@ namespace SQLiteNetExtensions.Extensions
         /// Deletes all the objects passed as parameters from the database.
         /// Relationships are not taken into account in this method
         /// </summary>
+        /// <param name="conn">SQLite Net connection object</param>
         /// <param name="objects">Objects to be deleted from the database</param>
         /// <typeparam name="T">The Entity type, it should match de database entity type</typeparam>
         public static void DeleteAll<T>(this SQLiteConnection conn, IEnumerable<T> objects) {
@@ -58,6 +68,7 @@ namespace SQLiteNetExtensions.Extensions
         /// Deletes all the objects passed with IDs equal to the passed parameters from the database.
         /// Relationships are not taken into account in this method
         /// </summary>
+        /// <param name="conn">SQLite Net connection object</param>
         /// <param name="primaryKeyValues">Primary keys of the objects to be deleted from the database</param>
         /// <typeparam name="T">The Entity type, it should match de database entity type</typeparam>
         public static void DeleteAllIds<T>(this SQLiteConnection conn, IEnumerable<object> primaryKeyValues) {

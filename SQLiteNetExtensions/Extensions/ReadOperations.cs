@@ -30,7 +30,7 @@ namespace SQLiteNetExtensions.Extensions
         /// properties of all the returned elements.
         /// </summary>
         /// <returns>List of all the elements of the type T that matches the filter with the children already loaded</returns>
-        /// <param name="conn">Conn.</param>
+        /// <param name="conn">SQLite Net connection object</param>
         /// <param name="filter">Filter that will be passed to the <c>Where</c> clause when fetching
         /// objects from the database. No relationship properties are allowed in this filter as they
         /// are loaded afterwards</param>
