@@ -29,11 +29,19 @@ namespace SQLiteNetExtensions.Extensions
         public static bool EnableRuntimeAssertions = true;
 
         /// <summary>
-        /// Updates the with children.
+        /// Updates the with foreign keys of the current object and save changes to the database and
+        /// updates the inverse foreign keys of the defined relationships so the relationships are
+        /// stored correctly in the database. This operation will create or delete the required intermediate
+        /// objects for ManyToMany relationships. All related objects must have a primary key assigned in order
+        /// to work correctly. This also implies that any object with 'AutoIncrement' primary key must've been
+        /// inserted in the database previous to this call.
+        /// This method will also update inverse relationships of objects that currently exist in the object tree,
+        /// but it won't update inverse relationships of objects that are not reachable through this object
+        /// properties. For example, objects removed from a 'ToMany' relationship won't be updated in memory.
         /// </summary>
         /// <param name="conn">SQLite Net connection object</param>
-        /// <param name="element">Element.</param>
-        /// <typeparam name="T">The 1st type parameter.</typeparam>
+        /// <param name="element">Object to be updated. Must already have been inserted in the database</param>
+        /// <typeparam name="T">The Entity type, it should match de database entity type</typeparam>
         public static void UpdateWithChildren<T>(this SQLiteConnection conn, T element)
         {
             // Update the current element

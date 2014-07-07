@@ -26,6 +26,12 @@ namespace SQLiteNetExtensions.Extensions
 
         #region Public API
         /// <summary>
+        /// Enable to allow descriptive error descriptions on incorrect relationships. Enabled by default.
+        /// Disable for production environments to remove the checks and reduce performance penalty
+        /// </summary>
+        public static bool EnableRuntimeAssertions = true;
+
+        /// <summary>
         /// Fetches all the entities of the specified type with the filter and fetches all the relationship
         /// properties of all the returned elements.
         /// </summary>
@@ -54,15 +60,9 @@ namespace SQLiteNetExtensions.Extensions
 
             return list;
         }
-            
-        /// <summary>
-        /// Enable to allow descriptive error descriptions on incorrect relationships. Enabled by default.
-        /// Disable for production environments to remove the checks and reduce performance penalty
-        /// </summary>
-        public static bool EnableRuntimeAssertions = true;
 
         /// <summary>
-        /// Obtains the object from the database and fetch all the properties annotated with
+        /// Obtains the object from the database and fetches all the properties annotated with
         /// any subclass of <c>RelationshipAttribute</c>. If the object with the specified primary key doesn't
         /// exist in the database, an exception will be raised.
         /// </summary>
@@ -100,21 +100,61 @@ namespace SQLiteNetExtensions.Extensions
             return element;
         }
 
+        /// <summary>
+        /// Fetches all the properties annotated with any subclass of <c>RelationshipAttribute</c> of the current
+        /// object and keeps fetching recursively if the <c>recursive</c> flag has been set.
+        /// </summary>
+        /// <param name="conn">SQLite Net connection object</param>
+        /// <param name="element">Element used to load all the relationship properties</param>
+        /// <param name="recursive">If set to <c>true</c> all the relationships with
+        /// <c>CascadeOperation.CascadeRead</c> will be loaded recusively.</param>
+        /// <typeparam name="T">Entity type where the object should be fetched from</typeparam>
         public static void GetChildren<T>(this SQLiteConnection conn, T element, bool recursive = false) 
         {
             GetChildrenRecursive(conn, element, false, recursive);
         }
 
+        /// <summary>
+        /// Fetches a specific property of the current object and keeps fetching recursively if the
+        /// <c>recursive</c> flag has been set.
+        /// </summary>
+        /// <param name="conn">SQLite Net connection object</param>
+        /// <param name="element">Element used to load all the relationship properties</param>
+        /// <param name="relationshipProperty">Name of the property to fetch from the database</param>
+        /// <param name="recursive">If set to <c>true</c> all the relationships with
+        /// <c>CascadeOperation.CascadeRead</c> will be loaded recusively.</param>
+        /// <typeparam name="T">Entity type where the object should be fetched from</typeparam>
         public static void GetChild<T>(this SQLiteConnection conn, T element, string relationshipProperty, bool recursive = false)
         {
             conn.GetChild(element, element.GetType().GetProperty(relationshipProperty), recursive);
         }
 
-        public static void GetChild<T>(this SQLiteConnection conn, T element, Expression<Func<T, object>> expression, bool recursive = false)
+        /// <summary>
+        /// Fetches a specific property of the current object and keeps fetching recursively if the
+        /// <c>recursive</c> flag has been set.
+        /// </summary>
+        /// <param name="conn">SQLite Net connection object</param>
+        /// <param name="element">Element used to load all the relationship properties</param>
+        /// <param name="propertyExpression">Expression that returns the property to be loaded from the database.
+        /// This variant is useful to avoid spelling mistakes and make the code refactor-safe.</param>
+        /// <param name="recursive">If set to <c>true</c> all the relationships with
+        /// <c>CascadeOperation.CascadeRead</c> will be loaded recusively.</param>
+        /// <typeparam name="T">Entity type where the object should be fetched from</typeparam>
+        public static void GetChild<T>(this SQLiteConnection conn, T element, Expression<Func<T, object>> propertyExpression, bool recursive = false)
         {
-            conn.GetChild(element, ReflectionExtensions.GetProperty(expression), recursive);
+            conn.GetChild(element, ReflectionExtensions.GetProperty(propertyExpression), recursive);
         }
 
+        /// <summary>
+        /// Fetches a specific property of the current object and keeps fetching recursively if the
+        /// <c>recursive</c> flag has been set.
+        /// </summary>
+        /// <param name="conn">SQLite Net connection object</param>
+        /// <param name="element">Element used to load all the relationship properties</param>
+        /// <param name="relationshipProperty">Property to load from the database</param>
+        /// <param name="recursive">If set to <c>true</c> all the relationships with
+        /// <c>CascadeOperation.CascadeRead</c> will be loaded recusively.</param>
+        /// <typeparam name="T">Entity type where the object should be fetched from</typeparam>
         public static void GetChild<T>(this SQLiteConnection conn, T element, PropertyInfo relationshipProperty, bool recursive = false)
         {
             conn.GetChildRecursive(element, relationshipProperty, recursive, new ObjectCache());
