@@ -372,6 +372,7 @@ namespace IntegrationTests.Touch.Tests
             //          |-(followed by)> 'Jaime' |-(follows)> 'Peter'*
             //          |                        |-(follows)> 'Thomas'*
             //          |                        |-(follows)> 'Mark' |-(followed by)> 'Jaime'*
+            //          |                        |-(followrd by)> 'Thomas'*
             //          |-(followed by)> 'John'*
             //
             // (*) -> Entity already loaded in a previous operation. Stop cascade loading
@@ -435,6 +436,9 @@ namespace IntegrationTests.Touch.Tests
 
             var obtainedJaime = obtainedThomas.Followers.FirstOrDefault(u => u.Id == jaime.Id);
             checkUser(jaime, obtainedJaime);
+
+            var obtainedMark = obtainedJaime.FollowingUsers.FirstOrDefault(u => u.Id == mark.Id);
+            checkUser(mark, obtainedMark);
 
         }
         #endregion
