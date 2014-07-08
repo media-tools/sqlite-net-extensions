@@ -1,11 +1,18 @@
 ﻿using System;
 using NUnit.Framework;
 using SQLiteNetExtensions.IntegrationTests;
-using SQLite.Net.Attributes;
 using SQLiteNetExtensions.Attributes;
 using SQLiteNetExtensions.Extensions;
 using System.Linq;
 using System.Collections.Generic;
+
+#if PCL
+using SQLite.Net;
+using SQLite.Net.Attributes;
+#else
+using Cirrious.MvvmCross.Community.Plugins.Sqlite;
+using Community.SQLite;
+#endif
 
 namespace SQLiteNetExtensions.IntegrationTests
 {
