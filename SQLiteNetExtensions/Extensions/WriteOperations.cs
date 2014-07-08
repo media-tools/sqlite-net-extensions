@@ -169,6 +169,12 @@ namespace SQLiteNetExtensions.Extensions
             objectCache = objectCache ?? new HashSet<object>();
             foreach (var relationshipProperty in element.GetType().GetRelationshipProperties())
             {
+                var relationshipAttribute = relationshipProperty.GetAttribute<RelationshipAttribute>();
+
+                // Ignore read-only attributes and process only 'CascadeInsert' attributes
+                if (relationshipAttribute.ReadOnly || !relationshipAttribute.IsCascadeInsert)
+                    continue;
+
                 var value = relationshipProperty.GetValue(element, null);
                 var enumerable = value as IEnumerable;
                 if (enumerable != null)

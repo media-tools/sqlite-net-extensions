@@ -20,7 +20,7 @@ namespace SQLiteNetExtensions.IntegrationTests
             [ForeignKey(typeof(Person))]
             public int OwnerId { get; set; }
 
-            [OneToOne(CascadeOperations = CascadeOperation.CascadeRead)]
+            [OneToOne(CascadeOperations = CascadeOperation.CascadeInsert)]
             public Person Owner { get; set; }
         }
 
@@ -31,7 +31,7 @@ namespace SQLiteNetExtensions.IntegrationTests
             public string Name { get; set; }
             public string Surname { get; set; }
 
-            [OneToOne(CascadeOperations = CascadeOperation.CascadeRead)]
+            [OneToOne(CascadeOperations = CascadeOperation.CascadeInsert)]
             public Passport Passport { get; set; }
         }
 
@@ -119,7 +119,7 @@ namespace SQLiteNetExtensions.IntegrationTests
             [ForeignKey(typeof(PersonGuid))]
             public Guid OwnerId { get; set; }
 
-            [OneToOne(CascadeOperations = CascadeOperation.CascadeRead)]
+            [OneToOne(CascadeOperations = CascadeOperation.CascadeInsert)]
             public PersonGuid Owner { get; set; }
         }
 
@@ -130,7 +130,7 @@ namespace SQLiteNetExtensions.IntegrationTests
             public string Name { get; set; }
             public string Surname { get; set; }
 
-            [OneToOne(CascadeOperations = CascadeOperation.CascadeRead)]
+            [OneToOne(CascadeOperations = CascadeOperation.CascadeInsert)]
             public PassportGuid Passport { get; set; }
         }
 
