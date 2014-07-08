@@ -7,7 +7,7 @@ using SQLiteNetExtensions.Extensions;
 using System.Linq;
 using System.Collections.Generic;
 
-namespace IntegrationTests.Touch.Tests
+namespace SQLiteNetExtensions.IntegrationTests
 {
     [TestFixture]
     public class RecursiveReadTests
