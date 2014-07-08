@@ -26,7 +26,7 @@ namespace SQLiteNetExtensions.Attributes
         public bool ReadOnly { get; set; }
 
         public bool IsCascadeRead { get { return CascadeOperations.HasFlag(CascadeOperation.CascadeRead); } }
-        public bool IsCascadeUpdate { get { return CascadeOperations.HasFlag(CascadeOperation.CascadeUpdate); } }
+        public bool IsCascadeInsert { get { return CascadeOperations.HasFlag(CascadeOperation.CascadeInsert); } }
         public bool IsCascadeDelete { get { return CascadeOperations.HasFlag(CascadeOperation.CascadeDelete); } }
     }
 }
