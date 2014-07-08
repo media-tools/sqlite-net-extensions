@@ -402,6 +402,161 @@ namespace SQLiteNetExtensions.IntegrationTests
             }
         }
         #endregion
+
+        #region OneToManyRecursiveInsertGuid
+        public class CustomerGuid {
+            [PrimaryKey]
+            public Guid Id { get; set; }
+
+            public string Name { get; set; }
+
+            [OneToMany(CascadeOperations = CascadeOperation.CascadeInsert)]
+            public OrderGuid[] Orders { get; set; }
+        }
+
+        [Table("Orders")] // 'Order' is a reserved keyword
+        public class OrderGuid {
+            [PrimaryKey]
+            public Guid Id { get; set; }
+
+            public float Amount { get; set; }
+            public DateTime Date { get; set; }
+
+            [ForeignKey(typeof(CustomerGuid))]
+            public Guid CustomerId { get; set; }
+
+            [ManyToOne]
+            public CustomerGuid Customer { get; set; }
+        }
+
+        [Test]
+        public void TestOneToManyRecursiveInsertGuid() {
+            var conn = Utils.CreateConnection();
+            conn.DropTable<CustomerGuid>();
+            conn.DropTable<OrderGuid>();
+            conn.CreateTable<CustomerGuid>();
+            conn.CreateTable<OrderGuid>();
+
+            var customer = new CustomerGuid
+            { 
+                Id = Guid.NewGuid(),
+                Name = "John Smith",
+                Orders = new []
+                {
+                    new OrderGuid { Id = Guid.NewGuid(), Amount = 25.7f, Date = new DateTime(2014, 5, 15, 11, 30, 15) },
+                    new OrderGuid { Id = Guid.NewGuid(), Amount = 15.2f, Date = new DateTime(2014, 3, 7, 13, 59, 1) },
+                    new OrderGuid { Id = Guid.NewGuid(), Amount = 0.5f, Date = new DateTime(2014, 4, 5, 7, 3, 0) },
+                    new OrderGuid { Id = Guid.NewGuid(), Amount = 106.6f, Date = new DateTime(2014, 7, 20, 21, 20, 24) },
+                    new OrderGuid { Id = Guid.NewGuid(), Amount = 98f, Date = new DateTime(2014, 02, 1, 22, 31, 7) }
+                }
+            };
+
+            conn.InsertWithChildren(customer, recursive: true);
+
+            var expectedOrders = customer.Orders.OrderBy(o => o.Date).ToDictionary(o => o.Id);
+
+            var obtainedCustomer = conn.GetWithChildren<CustomerGuid>(customer.Id, recursive: true);
+            Assert.NotNull(obtainedCustomer);
+            Assert.NotNull(obtainedCustomer.Orders);
+            Assert.AreEqual(expectedOrders.Count, obtainedCustomer.Orders.Length);
+
+            foreach (var order in obtainedCustomer.Orders)
+            {
+                var expectedOrder = expectedOrders[order.Id];
+                Assert.AreEqual(expectedOrder.Amount, order.Amount, 0.0001);
+                Assert.AreEqual(expectedOrder.Date, order.Date);
+                Assert.NotNull(order.Customer);
+                Assert.AreEqual(customer.Id, order.CustomerId);
+                Assert.AreEqual(customer.Id, order.Customer.Id);
+                Assert.AreEqual(customer.Name, order.Customer.Name);
+                Assert.NotNull(order.Customer.Orders);
+                Assert.AreEqual(expectedOrders.Count, order.Customer.Orders.Length);
+            }
+        }
+
+        [Test]
+        public void TestOneToManyRecursiveInsertOrReplaceGuid() {
+            var conn = Utils.CreateConnection();
+            conn.DropTable<CustomerGuid>();
+            conn.DropTable<OrderGuid>();
+            conn.CreateTable<CustomerGuid>();
+            conn.CreateTable<OrderGuid>();
+
+            var customer = new CustomerGuid
+            { 
+                Id = Guid.NewGuid(),
+                Name = "John Smith",
+                Orders = new []
+                {
+                    new OrderGuid { Id = Guid.NewGuid(), Amount = 25.7f, Date = new DateTime(2014, 5, 15, 11, 30, 15) },
+                    new OrderGuid { Id = Guid.NewGuid(), Amount = 15.2f, Date = new DateTime(2014, 3, 7, 13, 59, 1) },
+                    new OrderGuid { Id = Guid.NewGuid(), Amount = 0.5f, Date = new DateTime(2014, 4, 5, 7, 3, 0) },
+                    new OrderGuid { Id = Guid.NewGuid(), Amount = 106.6f, Date = new DateTime(2014, 7, 20, 21, 20, 24) },
+                    new OrderGuid { Id = Guid.NewGuid(), Amount = 98f, Date = new DateTime(2014, 02, 1, 22, 31, 7) }
+                }
+            };
+
+            conn.InsertOrReplaceWithChildren(customer, recursive: true);
+
+            var expectedOrders = customer.Orders.OrderBy(o => o.Date).ToDictionary(o => o.Id);
+
+            var obtainedCustomer = conn.GetWithChildren<CustomerGuid>(customer.Id, recursive: true);
+            Assert.NotNull(obtainedCustomer);
+            Assert.NotNull(obtainedCustomer.Orders);
+            Assert.AreEqual(expectedOrders.Count, obtainedCustomer.Orders.Length);
+
+            foreach (var order in obtainedCustomer.Orders)
+            {
+                var expectedOrder = expectedOrders[order.Id];
+                Assert.AreEqual(expectedOrder.Amount, order.Amount, 0.0001);
+                Assert.AreEqual(expectedOrder.Date, order.Date);
+                Assert.NotNull(order.Customer);
+                Assert.AreEqual(customer.Id, order.CustomerId);
+                Assert.AreEqual(customer.Id, order.Customer.Id);
+                Assert.AreEqual(customer.Name, order.Customer.Name);
+                Assert.NotNull(order.Customer.Orders);
+                Assert.AreEqual(expectedOrders.Count, order.Customer.Orders.Length);
+            }
+
+            var newCustomer = new CustomerGuid
+            { 
+                Id = customer.Id,
+                Name = "John Smith",
+                Orders = new []
+                {
+                    new OrderGuid { Id = customer.Orders[0].Id, Amount = 15.7f, Date = new DateTime(2012, 5, 15, 11, 30, 15) },
+                    new OrderGuid { Id = customer.Orders[2].Id, Amount = 55.2f, Date = new DateTime(2012, 3, 7, 13, 59, 1) },
+                    new OrderGuid { Id = customer.Orders[4].Id, Amount = 4.5f, Date = new DateTime(2012, 4, 5, 7, 3, 0) },
+                    new OrderGuid { Id = Guid.NewGuid(), Amount = 206.6f, Date = new DateTime(2012, 7, 20, 21, 20, 24) },
+                    new OrderGuid { Id = Guid.NewGuid(), Amount = 78f, Date = new DateTime(2012, 02, 1, 22, 31, 7) }
+                }
+            };
+
+            customer = newCustomer;
+
+            conn.InsertOrReplaceWithChildren(customer, recursive: true);
+
+            expectedOrders = customer.Orders.OrderBy(o => o.Date).ToDictionary(o => o.Id);
+
+            obtainedCustomer = conn.GetWithChildren<CustomerGuid>(customer.Id, recursive: true);
+            Assert.NotNull(obtainedCustomer);
+            Assert.NotNull(obtainedCustomer.Orders);
+            Assert.AreEqual(expectedOrders.Count, obtainedCustomer.Orders.Length);
+
+            foreach (var order in obtainedCustomer.Orders)
+            {
+                var expectedOrder = expectedOrders[order.Id];
+                Assert.AreEqual(expectedOrder.Amount, order.Amount, 0.0001);
+                Assert.AreEqual(expectedOrder.Date, order.Date);
+                Assert.NotNull(order.Customer);
+                Assert.AreEqual(customer.Id, order.CustomerId);
+                Assert.AreEqual(customer.Id, order.Customer.Id);
+                Assert.AreEqual(customer.Name, order.Customer.Name);
+                Assert.NotNull(order.Customer.Orders);
+                Assert.AreEqual(expectedOrders.Count, order.Customer.Orders.Length);
+            }
+        }
+        #endregion
     }
 }
 
