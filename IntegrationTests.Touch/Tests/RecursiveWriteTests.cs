@@ -18,6 +18,17 @@ namespace SQLiteNetExtensions.IntegrationTests
     public class RecursiveWriteTests
     {
         #region OneToOneRecursiveInsert
+        public class Person {
+            [PrimaryKey, AutoIncrement]
+            public int Identifier { get; set; }
+            
+            public string Name { get; set; }
+            public string Surname { get; set; }
+            
+            [OneToOne(CascadeOperations = CascadeOperation.CascadeInsert)]
+            public Passport Passport { get; set; }
+        }
+
         public class Passport {
             [PrimaryKey, AutoIncrement]
             public int Id { get; set; }
@@ -27,19 +38,8 @@ namespace SQLiteNetExtensions.IntegrationTests
             [ForeignKey(typeof(Person))]
             public int OwnerId { get; set; }
 
-            [OneToOne(CascadeOperations = CascadeOperation.CascadeInsert)]
+            [OneToOne(ReadOnly = true)]
             public Person Owner { get; set; }
-        }
-
-        public class Person {
-            [PrimaryKey, AutoIncrement]
-            public int Identifier { get; set; }
-
-            public string Name { get; set; }
-            public string Surname { get; set; }
-
-            [OneToOne(CascadeOperations = CascadeOperation.CascadeInsert)]
-            public Passport Passport { get; set; }
         }
 
         [Test]
@@ -70,6 +70,7 @@ namespace SQLiteNetExtensions.IntegrationTests
             Assert.That(obtainedPerson.Name, Is.EqualTo(person.Name));
             Assert.That(obtainedPerson.Surname, Is.EqualTo(person.Surname));
             Assert.That(obtainedPassport.PassportNumber, Is.EqualTo(person.Passport.PassportNumber));
+            Assert.That(obtainedPassport.OwnerId, Is.EqualTo(person.Identifier));
         }
 
         [Test]
@@ -100,6 +101,7 @@ namespace SQLiteNetExtensions.IntegrationTests
             Assert.That(obtainedPerson.Name, Is.EqualTo(person.Name));
             Assert.That(obtainedPerson.Surname, Is.EqualTo(person.Surname));
             Assert.That(obtainedPassport.PassportNumber, Is.EqualTo(person.Passport.PassportNumber));
+            Assert.That(obtainedPassport.OwnerId, Is.EqualTo(person.Identifier));
 
 
             // Replace the elements in the database recursively
@@ -113,10 +115,22 @@ namespace SQLiteNetExtensions.IntegrationTests
             Assert.That(obtainedPerson.Name, Is.EqualTo(person.Name));
             Assert.That(obtainedPerson.Surname, Is.EqualTo(person.Surname));
             Assert.That(obtainedPassport.PassportNumber, Is.EqualTo(person.Passport.PassportNumber));
+            Assert.That(obtainedPassport.OwnerId, Is.EqualTo(person.Identifier));
         }
         #endregion
 
         #region OneToOneRecursiveInsertGuid
+        public class PersonGuid {
+            [PrimaryKey]
+            public Guid Identifier { get; set; }
+            
+            public string Name { get; set; }
+            public string Surname { get; set; }
+            
+            [OneToOne(CascadeOperations = CascadeOperation.CascadeInsert)]
+            public PassportGuid Passport { get; set; }
+        }
+
         public class PassportGuid {
             [PrimaryKey]
             public Guid Id { get; set; }
@@ -126,19 +140,8 @@ namespace SQLiteNetExtensions.IntegrationTests
             [ForeignKey(typeof(PersonGuid))]
             public Guid OwnerId { get; set; }
 
-            [OneToOne(CascadeOperations = CascadeOperation.CascadeInsert)]
+            [OneToOne(ReadOnly = true)]
             public PersonGuid Owner { get; set; }
-        }
-
-        public class PersonGuid {
-            [PrimaryKey]
-            public Guid Identifier { get; set; }
-
-            public string Name { get; set; }
-            public string Surname { get; set; }
-
-            [OneToOne(CascadeOperations = CascadeOperation.CascadeInsert)]
-            public PassportGuid Passport { get; set; }
         }
 
         [Test]
@@ -171,6 +174,7 @@ namespace SQLiteNetExtensions.IntegrationTests
             Assert.That(obtainedPerson.Name, Is.EqualTo(person.Name));
             Assert.That(obtainedPerson.Surname, Is.EqualTo(person.Surname));
             Assert.That(obtainedPassport.PassportNumber, Is.EqualTo(person.Passport.PassportNumber));
+            Assert.That(obtainedPassport.OwnerId, Is.EqualTo(person.Identifier));
         }
 
         [Test]
@@ -203,6 +207,7 @@ namespace SQLiteNetExtensions.IntegrationTests
             Assert.That(obtainedPerson.Name, Is.EqualTo(person.Name));
             Assert.That(obtainedPerson.Surname, Is.EqualTo(person.Surname));
             Assert.That(obtainedPassport.PassportNumber, Is.EqualTo(person.Passport.PassportNumber));
+            Assert.That(obtainedPassport.OwnerId, Is.EqualTo(person.Identifier));
 
 
             // Replace the elements in the database recursively
@@ -216,6 +221,7 @@ namespace SQLiteNetExtensions.IntegrationTests
             Assert.That(obtainedPerson.Name, Is.EqualTo(person.Name));
             Assert.That(obtainedPerson.Surname, Is.EqualTo(person.Surname));
             Assert.That(obtainedPassport.PassportNumber, Is.EqualTo(person.Passport.PassportNumber));
+            Assert.That(obtainedPassport.OwnerId, Is.EqualTo(person.Identifier));
         }
         #endregion
     }
