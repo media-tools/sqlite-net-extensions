@@ -109,23 +109,8 @@ namespace SQLiteNetExtensions.Extensions
             var primaryKeyProperty = elementsToInsert[0].GetType().GetPrimaryKey();
             var isAutoIncrementPrimaryKey = primaryKeyProperty != null && primaryKeyProperty.GetAttribute<AutoIncrementAttribute>() != null;
 
-            foreach (var element in elementsToInsert)
-            {
-                bool shouldReplace = false;
-                bool isPrimaryKeySet = false;
-                if (replace && isAutoIncrementPrimaryKey)
-                {
-                    var primaryKeyValue = primaryKeyProperty.GetValue(element, null);
-                    var defaultPrimaryKeyValue = primaryKeyProperty.PropertyType.GetDefault();
-                    isPrimaryKeySet = primaryKeyValue != null && !primaryKeyValue.Equals(defaultPrimaryKeyValue);
-                }
-
-                shouldReplace = replace && (!isAutoIncrementPrimaryKey || isPrimaryKeySet);
-
-                if (shouldReplace)
-                    conn.InsertOrReplace(element);
-                else
-                    conn.Insert(element);
+            foreach (var element in elementsToInsert) {
+                conn.InsertElement(element, replace, primaryKeyProperty, isAutoIncrementPrimaryKey);
             }
 
             if (recursive) {
@@ -145,25 +130,7 @@ namespace SQLiteNetExtensions.Extensions
             if (objectCache.Contains(element))
                 return;
 
-            var primaryKeyProperty = element.GetType().GetPrimaryKey();
-            var isAutoIncrementPrimaryKey = primaryKeyProperty != null && primaryKeyProperty.GetAttribute<AutoIncrementAttribute>() != null;
-
-            bool shouldReplace = false;
-            bool isPrimaryKeySet = false;
-            if (replace && isAutoIncrementPrimaryKey)
-            {
-                var primaryKeyValue = primaryKeyProperty.GetValue(element, null);
-                var defaultPrimaryKeyValue = primaryKeyProperty.PropertyType.GetDefault();
-                isPrimaryKeySet = primaryKeyValue != null && !primaryKeyValue.Equals(defaultPrimaryKeyValue);
-            }
-
-            shouldReplace = replace && (!isAutoIncrementPrimaryKey || isPrimaryKeySet);
-
-            // Only replace elements that have an assigned primary key
-            if (shouldReplace)
-                conn.InsertOrReplace(element);
-            else
-                conn.Insert(element);
+            conn.InsertElement(element, replace);
 
             if (recursive) {
                 objectCache.Add(element);
@@ -193,6 +160,31 @@ namespace SQLiteNetExtensions.Extensions
                 else if (value != null)
                     conn.InsertWithChildrenRecursive(value, replace, recursive, objectCache);
             }
+        }
+
+        static void InsertElement(this SQLiteConnection conn, object element, bool replace) {
+            var primaryKeyProperty = element.GetType().GetPrimaryKey();
+            var isAutoIncrementPrimaryKey = primaryKeyProperty != null && primaryKeyProperty.GetAttribute<AutoIncrementAttribute>() != null;
+
+            conn.InsertElement(element, replace, primaryKeyProperty, isAutoIncrementPrimaryKey);
+        }
+
+        static void InsertElement(this SQLiteConnection conn, object element, bool replace, PropertyInfo primaryKeyProperty, bool isAutoIncrementPrimaryKey) {
+            bool isPrimaryKeySet = false;
+            if (replace && isAutoIncrementPrimaryKey)
+            {
+                var primaryKeyValue = primaryKeyProperty.GetValue(element, null);
+                var defaultPrimaryKeyValue = primaryKeyProperty.PropertyType.GetDefault();
+                isPrimaryKeySet = primaryKeyValue != null && !primaryKeyValue.Equals(defaultPrimaryKeyValue);
+            }
+
+            bool shouldReplace = replace && (!isAutoIncrementPrimaryKey || isPrimaryKeySet);
+
+            // Only replace elements that have an assigned primary key
+            if (shouldReplace)
+                conn.InsertOrReplace(element);
+            else
+                conn.Insert(element);
         }
 
         private static void RefreshForeignKeys<T>(T element)
