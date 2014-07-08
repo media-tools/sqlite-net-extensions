@@ -52,6 +52,14 @@ namespace SQLiteNetExtensions.Extensions
             conn.UpdateInverseForeignKeys(element);
         }
 
+        public static void InsertOrReplaceWithChildren<T>(this SQLiteConnection conn, T element, bool recursive = false) {
+            conn.InsertWithChildrenRecursive(element, true, recursive);
+        }
+
+        public static void InsertWithChildren<T>(this SQLiteConnection conn, T element, bool recursive = false) {
+            conn.InsertWithChildrenRecursive(element, false, recursive);
+        }
+
         /// <summary>
         /// Deletes all the objects passed as parameters from the database.
         /// Relationships are not taken into account in this method
@@ -88,6 +96,88 @@ namespace SQLiteNetExtensions.Extensions
 
 
         #region Private methods
+        static void InsertAllWithChildrenRecursive(this SQLiteConnection conn, IEnumerable elements, bool replace, bool recursive, ISet<object> objectCache = null) {
+            if (elements == null)
+                return;
+
+            objectCache = objectCache ?? new HashSet<object>();
+            var elementsToInsert = elements.Cast<object>().Except(objectCache).ToList();
+            if (elementsToInsert.Count == 0)
+                return;
+                
+//            var primaryKeyProperty = elementsToInsert.First().GetType().GetPrimaryKey();
+//            var isAutoIncrementPrimaryKey = primaryKeyProperty != null && primaryKeyProperty.GetAttribute<AutoIncrementAttribute>() != null;
+//
+//            // Initial insert is only required for 'AutoIncrement' primary keys in order to have the PK assigned
+//            if (isAutoIncrementPrimaryKey)
+//            {
+                foreach (var element in elementsToInsert)
+                {
+//                    // Only insert if the primary key is not defined (otherwise the initial insert is not required)
+//                    if (primaryKeyProperty.GetValue(element, null) != null)
+//                    {
+                        if (replace)
+                            conn.InsertOrReplace(element);
+                        else
+                            conn.Insert(element);
+//                    }
+                }
+//            }
+
+            if (recursive) {
+                foreach (var element in elementsToInsert)
+                    objectCache.Add(element);
+                    
+                foreach (var element in elementsToInsert)
+                    conn.InsertChildrenRecursive(element, replace, recursive, objectCache);
+            }
+
+            foreach (var element in elementsToInsert)
+                conn.UpdateWithChildren(element);
+        }
+
+        static void InsertWithChildrenRecursive(this SQLiteConnection conn, object element, bool replace, bool recursive, ISet<object> objectCache = null) {
+            objectCache = objectCache ?? new HashSet<object>();
+            if (objectCache.Contains(element))
+                return;
+
+//            var primaryKeyProperty = element.GetType().GetPrimaryKey();
+//            var isAutoIncrementPrimaryKey = primaryKeyProperty != null && primaryKeyProperty.GetAttribute<AutoIncrementAttribute>() != null;
+//
+//            // Initial insert is only required for 'AutoIncrement' primary keys in order to have the PK assigned
+//            // Only insert if the primary key is not defined (otherwise the initial insert is not required)
+//            if (isAutoIncrementPrimaryKey && primaryKeyProperty.GetValue(element, null) != null)
+//            {
+                if (replace)
+                    conn.InsertOrReplace(element);
+                else
+                    conn.Insert(element);
+//            }
+
+            if (recursive) {
+                objectCache.Add(element);
+                conn.InsertChildrenRecursive(element, replace, recursive, objectCache);
+            }
+
+            conn.UpdateWithChildren(element);
+        }
+
+        static void InsertChildrenRecursive(this SQLiteConnection conn, object element, bool replace, bool recursive, ISet<object> objectCache = null) {
+            if (element == null)
+                return;
+
+            objectCache = objectCache ?? new HashSet<object>();
+            foreach (var relationshipProperty in element.GetType().GetRelationshipProperties())
+            {
+                var value = relationshipProperty.GetValue(element, null);
+                var enumerable = value as IEnumerable;
+                if (enumerable != null)
+                    conn.InsertAllWithChildrenRecursive(enumerable, replace, recursive, objectCache);
+                else if (value != null)
+                    conn.InsertWithChildrenRecursive(value, replace, recursive, objectCache);
+            }
+        }
+
         private static void RefreshForeignKeys<T>(T element)
         {
             var type = element.GetType();
