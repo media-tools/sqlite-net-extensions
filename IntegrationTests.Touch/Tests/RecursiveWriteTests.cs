@@ -341,7 +341,7 @@ namespace SQLiteNetExtensions.IntegrationTests
                 }
             };
 
-            conn.InsertOrReplaceWithChildren(customer, recursive: true);
+            conn.InsertOrReplaceWithChildren(customer);
 
             var expectedOrders = customer.Orders.OrderBy(o => o.Date).ToDictionary(o => o.Id);
 

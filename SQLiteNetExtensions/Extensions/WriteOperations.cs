@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
 using SQLiteNetExtensions.Exceptions;
@@ -101,28 +100,15 @@ namespace SQLiteNetExtensions.Extensions
             if (elements == null)
                 return;
 
-            objectCache = objectCache ?? new HashSet<object>();
-            var elementsToInsert = elements.Cast<object>().Except(objectCache).ToList();
-            if (elementsToInsert.Count == 0)
-                return;
+            var insertedElements = conn.InsertElements(elements, replace, objectCache).Cast<object>().ToList();
                 
-            var primaryKeyProperty = elementsToInsert[0].GetType().GetPrimaryKey();
-            var isAutoIncrementPrimaryKey = primaryKeyProperty != null && primaryKeyProperty.GetAttribute<AutoIncrementAttribute>() != null;
-
-            foreach (var element in elementsToInsert) {
-                conn.InsertElement(element, replace, primaryKeyProperty, isAutoIncrementPrimaryKey);
+            foreach (var element in insertedElements) {
+                conn.InsertChildrenRecursive(element, replace, recursive, objectCache);
             }
 
-            if (recursive) {
-                foreach (var element in elementsToInsert)
-                    objectCache.Add(element);
-                    
-                foreach (var element in elementsToInsert)
-                    conn.InsertChildrenRecursive(element, replace, recursive, objectCache);
-            }
-
-            foreach (var element in elementsToInsert)
+            foreach (var element in insertedElements) {
                 conn.UpdateWithChildren(element);
+            }
         }
 
         static void InsertWithChildrenRecursive(this SQLiteConnection conn, object element, bool replace, bool recursive, ISet<object> objectCache = null) {
@@ -130,12 +116,10 @@ namespace SQLiteNetExtensions.Extensions
             if (objectCache.Contains(element))
                 return;
 
-            conn.InsertElement(element, replace);
+            conn.InsertElement(element, replace, objectCache);
 
-            if (recursive) {
-                objectCache.Add(element);
-                conn.InsertChildrenRecursive(element, replace, recursive, objectCache);
-            }
+            objectCache.Add(element);
+            conn.InsertChildrenRecursive(element, replace, recursive, objectCache);
 
             conn.UpdateWithChildren(element);
         }
@@ -154,22 +138,62 @@ namespace SQLiteNetExtensions.Extensions
                     continue;
 
                 var value = relationshipProperty.GetValue(element, null);
-                var enumerable = value as IEnumerable;
-                if (enumerable != null)
-                    conn.InsertAllWithChildrenRecursive(enumerable, replace, recursive, objectCache);
-                else if (value != null)
-                    conn.InsertWithChildrenRecursive(value, replace, recursive, objectCache);
+                conn.InsertValue(value, replace, recursive, objectCache);
             }
         }
 
-        static void InsertElement(this SQLiteConnection conn, object element, bool replace) {
+        static void InsertValue(this SQLiteConnection conn, object value, bool replace, bool recursive, ISet<object> objectCache) {
+            if (value == null)
+                return;
+
+            var enumerable = value as IEnumerable;
+            if (recursive)
+            {
+                if (enumerable != null)
+                    conn.InsertAllWithChildrenRecursive(enumerable, replace, recursive, objectCache);
+                else
+                    conn.InsertWithChildrenRecursive(value, replace, recursive, objectCache);
+            }
+            else
+            {
+                if (enumerable != null)
+                    conn.InsertElements(enumerable, replace, objectCache);
+                else
+                    conn.InsertElement(value, replace, objectCache);
+            }
+        }
+
+        static IEnumerable InsertElements(this SQLiteConnection conn, IEnumerable elements, bool replace, ISet<object> objectCache) {
+            if (elements == null)
+                return Enumerable.Empty<object>();
+
+            objectCache = objectCache ?? new HashSet<object>();
+            var elementsToInsert = elements.Cast<object>().Except(objectCache).ToList();
+            if (elementsToInsert.Count == 0)
+                return Enumerable.Empty<object>();
+
+            var primaryKeyProperty = elementsToInsert[0].GetType().GetPrimaryKey();
+            var isAutoIncrementPrimaryKey = primaryKeyProperty != null && primaryKeyProperty.GetAttribute<AutoIncrementAttribute>() != null;
+
+            foreach (var element in elementsToInsert) {
+                conn.InsertElement(element, replace, primaryKeyProperty, isAutoIncrementPrimaryKey, objectCache);
+                objectCache.Add(element);
+            }
+
+            return elementsToInsert;
+        }
+
+        static void InsertElement(this SQLiteConnection conn, object element, bool replace, ISet<object> objectCache) {
             var primaryKeyProperty = element.GetType().GetPrimaryKey();
             var isAutoIncrementPrimaryKey = primaryKeyProperty != null && primaryKeyProperty.GetAttribute<AutoIncrementAttribute>() != null;
 
-            conn.InsertElement(element, replace, primaryKeyProperty, isAutoIncrementPrimaryKey);
+            conn.InsertElement(element, replace, primaryKeyProperty, isAutoIncrementPrimaryKey, objectCache);
         }
 
-        static void InsertElement(this SQLiteConnection conn, object element, bool replace, PropertyInfo primaryKeyProperty, bool isAutoIncrementPrimaryKey) {
+        static void InsertElement(this SQLiteConnection conn, object element, bool replace, PropertyInfo primaryKeyProperty, bool isAutoIncrementPrimaryKey, ISet<object> objectCache) {
+            if (element == null || (objectCache != null && objectCache.Contains(element)))
+                return;
+
             bool isPrimaryKeySet = false;
             if (replace && isAutoIncrementPrimaryKey)
             {
