@@ -3,6 +3,7 @@ using NUnit.Framework;
 using SQLiteNetExtensions.Attributes;
 using SQLiteNetExtensions.IntegrationTests;
 using SQLiteNetExtensions.Extensions;
+using System.Linq;
 
 #if PCL
 using SQLite.Net;
@@ -103,6 +104,18 @@ namespace SQLiteNetExtensions.IntegrationTests
             Assert.That(obtainedPassport.PassportNumber, Is.EqualTo(person.Passport.PassportNumber));
             Assert.That(obtainedPassport.OwnerId, Is.EqualTo(person.Identifier));
 
+
+            var newPerson = new Person
+            {
+                Identifier = person.Identifier,
+                Name = "John",
+                Surname = "Smith",
+                Passport = new Passport {
+                    Id = person.Passport.Id,
+                    PassportNumber = "JS123456"
+                }
+            };
+            person = newPerson;
 
             // Replace the elements in the database recursively
             conn.InsertOrReplaceWithChildren(person, recursive: true);
@@ -210,6 +223,18 @@ namespace SQLiteNetExtensions.IntegrationTests
             Assert.That(obtainedPassport.OwnerId, Is.EqualTo(person.Identifier));
 
 
+            var newPerson = new PersonGuid
+            {
+                Identifier = person.Identifier,
+                Name = "John",
+                Surname = "Smith",
+                Passport = new PassportGuid {
+                    Id = person.Passport.Id,
+                    PassportNumber = "JS123456"
+                }
+            };
+            person = newPerson;
+
             // Replace the elements in the database recursively
             conn.InsertOrReplaceWithChildren(person, recursive: true);
 
@@ -222,6 +247,159 @@ namespace SQLiteNetExtensions.IntegrationTests
             Assert.That(obtainedPerson.Surname, Is.EqualTo(person.Surname));
             Assert.That(obtainedPassport.PassportNumber, Is.EqualTo(person.Passport.PassportNumber));
             Assert.That(obtainedPassport.OwnerId, Is.EqualTo(person.Identifier));
+        }
+        #endregion
+
+        #region OneToManyRecursiveInsert
+        public class Customer {
+            [PrimaryKey, AutoIncrement]
+            public int Id { get; set; }
+
+            public string Name { get; set; }
+
+            [OneToMany(CascadeOperations = CascadeOperation.CascadeInsert)]
+            public Order[] Orders { get; set; }
+        }
+
+        [Table("Orders")] // 'Order' is a reserved keyword
+        public class Order {
+            [PrimaryKey, AutoIncrement]
+            public int Id { get; set; }
+
+            public float Amount { get; set; }
+            public DateTime Date { get; set; }
+
+            [ForeignKey(typeof(Customer))]
+            public int CustomerId { get; set; }
+
+            [ManyToOne]
+            public Customer Customer { get; set; }
+        }
+
+        [Test]
+        public void TestOneToManyRecursiveInsert() {
+            var conn = Utils.CreateConnection();
+            conn.DropTable<Customer>();
+            conn.DropTable<Order>();
+            conn.CreateTable<Customer>();
+            conn.CreateTable<Order>();
+
+            var customer = new Customer
+            { 
+                Name = "John Smith",
+                Orders = new []
+                {
+                    new Order { Amount = 25.7f, Date = new DateTime(2014, 5, 15, 11, 30, 15) },
+                    new Order { Amount = 15.2f, Date = new DateTime(2014, 3, 7, 13, 59, 1) },
+                    new Order { Amount = 0.5f, Date = new DateTime(2014, 4, 5, 7, 3, 0) },
+                    new Order { Amount = 106.6f, Date = new DateTime(2014, 7, 20, 21, 20, 24) },
+                    new Order { Amount = 98f, Date = new DateTime(2014, 02, 1, 22, 31, 7) }
+                }
+            };
+
+            conn.InsertWithChildren(customer, recursive: true);
+
+            var expectedOrders = customer.Orders.OrderBy(o => o.Date).ToDictionary(o => o.Id);
+
+            var obtainedCustomer = conn.GetWithChildren<Customer>(customer.Id, recursive: true);
+            Assert.NotNull(obtainedCustomer);
+            Assert.NotNull(obtainedCustomer.Orders);
+            Assert.AreEqual(expectedOrders.Count, obtainedCustomer.Orders.Length);
+
+            foreach (var order in obtainedCustomer.Orders)
+            {
+                var expectedOrder = expectedOrders[order.Id];
+                Assert.AreEqual(expectedOrder.Amount, order.Amount, 0.0001);
+                Assert.AreEqual(expectedOrder.Date, order.Date);
+                Assert.NotNull(order.Customer);
+                Assert.AreEqual(customer.Id, order.CustomerId);
+                Assert.AreEqual(customer.Id, order.Customer.Id);
+                Assert.AreEqual(customer.Name, order.Customer.Name);
+                Assert.NotNull(order.Customer.Orders);
+                Assert.AreEqual(expectedOrders.Count, order.Customer.Orders.Length);
+            }
+        }
+
+        [Test]
+        public void TestOneToManyRecursiveInsertOrReplace() {
+            var conn = Utils.CreateConnection();
+            conn.DropTable<Customer>();
+            conn.DropTable<Order>();
+            conn.CreateTable<Customer>();
+            conn.CreateTable<Order>();
+
+            var customer = new Customer
+            { 
+                Name = "John Smith",
+                Orders = new []
+                {
+                    new Order { Amount = 25.7f, Date = new DateTime(2014, 5, 15, 11, 30, 15) },
+                    new Order { Amount = 15.2f, Date = new DateTime(2014, 3, 7, 13, 59, 1) },
+                    new Order { Amount = 0.5f, Date = new DateTime(2014, 4, 5, 7, 3, 0) },
+                    new Order { Amount = 106.6f, Date = new DateTime(2014, 7, 20, 21, 20, 24) },
+                    new Order { Amount = 98f, Date = new DateTime(2014, 02, 1, 22, 31, 7) }
+                }
+            };
+
+            conn.InsertOrReplaceWithChildren(customer, recursive: true);
+
+            var expectedOrders = customer.Orders.OrderBy(o => o.Date).ToDictionary(o => o.Id);
+
+            var obtainedCustomer = conn.GetWithChildren<Customer>(customer.Id, recursive: true);
+            Assert.NotNull(obtainedCustomer);
+            Assert.NotNull(obtainedCustomer.Orders);
+            Assert.AreEqual(expectedOrders.Count, obtainedCustomer.Orders.Length);
+
+            foreach (var order in obtainedCustomer.Orders)
+            {
+                var expectedOrder = expectedOrders[order.Id];
+                Assert.AreEqual(expectedOrder.Amount, order.Amount, 0.0001);
+                Assert.AreEqual(expectedOrder.Date, order.Date);
+                Assert.NotNull(order.Customer);
+                Assert.AreEqual(customer.Id, order.CustomerId);
+                Assert.AreEqual(customer.Id, order.Customer.Id);
+                Assert.AreEqual(customer.Name, order.Customer.Name);
+                Assert.NotNull(order.Customer.Orders);
+                Assert.AreEqual(expectedOrders.Count, order.Customer.Orders.Length);
+            }
+
+            var newCustomer = new Customer
+            { 
+                Id = customer.Id,
+                Name = "John Smith",
+                Orders = new []
+                {
+                    new Order { Id = customer.Orders[0].Id, Amount = 15.7f, Date = new DateTime(2012, 5, 15, 11, 30, 15) },
+                    new Order { Id = customer.Orders[2].Id, Amount = 55.2f, Date = new DateTime(2012, 3, 7, 13, 59, 1) },
+                    new Order { Id = customer.Orders[4].Id, Amount = 4.5f, Date = new DateTime(2012, 4, 5, 7, 3, 0) },
+                    new Order { Amount = 206.6f, Date = new DateTime(2012, 7, 20, 21, 20, 24) },
+                    new Order { Amount = 78f, Date = new DateTime(2012, 02, 1, 22, 31, 7) }
+                }
+            };
+
+            customer = newCustomer;
+
+            conn.InsertOrReplaceWithChildren(customer, recursive: true);
+
+            expectedOrders = customer.Orders.OrderBy(o => o.Date).ToDictionary(o => o.Id);
+
+            obtainedCustomer = conn.GetWithChildren<Customer>(customer.Id, recursive: true);
+            Assert.NotNull(obtainedCustomer);
+            Assert.NotNull(obtainedCustomer.Orders);
+            Assert.AreEqual(expectedOrders.Count, obtainedCustomer.Orders.Length);
+
+            foreach (var order in obtainedCustomer.Orders)
+            {
+                var expectedOrder = expectedOrders[order.Id];
+                Assert.AreEqual(expectedOrder.Amount, order.Amount, 0.0001);
+                Assert.AreEqual(expectedOrder.Date, order.Date);
+                Assert.NotNull(order.Customer);
+                Assert.AreEqual(customer.Id, order.CustomerId);
+                Assert.AreEqual(customer.Id, order.Customer.Id);
+                Assert.AreEqual(customer.Name, order.Customer.Name);
+                Assert.NotNull(order.Customer.Orders);
+                Assert.AreEqual(expectedOrders.Count, order.Customer.Orders.Length);
+            }
         }
         #endregion
     }
