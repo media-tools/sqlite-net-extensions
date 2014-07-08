@@ -72,6 +72,11 @@ namespace SQLiteNetExtensions.Extensions
             return type;
         }
 
+        public static object GetDefault(this Type type)
+        {
+            return type.IsValueType ? Activator.CreateInstance(type) : null;
+        }
+
         private static PropertyInfo GetExplicitForeignKeyProperty(this Type type, Type destinationType)
         {
             return (from property in type.GetProperties(BindingFlags.Public | BindingFlags.Instance)

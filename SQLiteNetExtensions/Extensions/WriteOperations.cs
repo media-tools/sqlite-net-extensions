@@ -105,24 +105,27 @@ namespace SQLiteNetExtensions.Extensions
             if (elementsToInsert.Count == 0)
                 return;
                 
-//            var primaryKeyProperty = elementsToInsert.First().GetType().GetPrimaryKey();
-//            var isAutoIncrementPrimaryKey = primaryKeyProperty != null && primaryKeyProperty.GetAttribute<AutoIncrementAttribute>() != null;
-//
-//            // Initial insert is only required for 'AutoIncrement' primary keys in order to have the PK assigned
-//            if (isAutoIncrementPrimaryKey)
-//            {
-                foreach (var element in elementsToInsert)
+            var primaryKeyProperty = elementsToInsert[0].GetType().GetPrimaryKey();
+            var isAutoIncrementPrimaryKey = primaryKeyProperty != null && primaryKeyProperty.GetAttribute<AutoIncrementAttribute>() != null;
+
+            foreach (var element in elementsToInsert)
+            {
+                bool shouldReplace = false;
+                bool isPrimaryKeySet = false;
+                if (replace && isAutoIncrementPrimaryKey)
                 {
-//                    // Only insert if the primary key is not defined (otherwise the initial insert is not required)
-//                    if (primaryKeyProperty.GetValue(element, null) != null)
-//                    {
-                        if (replace)
-                            conn.InsertOrReplace(element);
-                        else
-                            conn.Insert(element);
-//                    }
+                    var primaryKeyValue = primaryKeyProperty.GetValue(element, null);
+                    var defaultPrimaryKeyValue = primaryKeyProperty.PropertyType.GetDefault();
+                    isPrimaryKeySet = primaryKeyValue != null && !primaryKeyValue.Equals(defaultPrimaryKeyValue);
                 }
-//            }
+
+                shouldReplace = replace && (!isAutoIncrementPrimaryKey || isPrimaryKeySet);
+
+                if (shouldReplace)
+                    conn.InsertOrReplace(element);
+                else
+                    conn.Insert(element);
+            }
 
             if (recursive) {
                 foreach (var element in elementsToInsert)
@@ -141,18 +144,25 @@ namespace SQLiteNetExtensions.Extensions
             if (objectCache.Contains(element))
                 return;
 
-//            var primaryKeyProperty = element.GetType().GetPrimaryKey();
-//            var isAutoIncrementPrimaryKey = primaryKeyProperty != null && primaryKeyProperty.GetAttribute<AutoIncrementAttribute>() != null;
-//
-//            // Initial insert is only required for 'AutoIncrement' primary keys in order to have the PK assigned
-//            // Only insert if the primary key is not defined (otherwise the initial insert is not required)
-//            if (isAutoIncrementPrimaryKey && primaryKeyProperty.GetValue(element, null) != null)
-//            {
-                if (replace)
-                    conn.InsertOrReplace(element);
-                else
-                    conn.Insert(element);
-//            }
+            var primaryKeyProperty = element.GetType().GetPrimaryKey();
+            var isAutoIncrementPrimaryKey = primaryKeyProperty != null && primaryKeyProperty.GetAttribute<AutoIncrementAttribute>() != null;
+
+            bool shouldReplace = false;
+            bool isPrimaryKeySet = false;
+            if (replace && isAutoIncrementPrimaryKey)
+            {
+                var primaryKeyValue = primaryKeyProperty.GetValue(element, null);
+                var defaultPrimaryKeyValue = primaryKeyProperty.PropertyType.GetDefault();
+                isPrimaryKeySet = primaryKeyValue != null && !primaryKeyValue.Equals(defaultPrimaryKeyValue);
+            }
+
+            shouldReplace = replace && (!isAutoIncrementPrimaryKey || isPrimaryKeySet);
+
+            // Only replace elements that have an assigned primary key
+            if (shouldReplace)
+                conn.InsertOrReplace(element);
+            else
+                conn.Insert(element);
 
             if (recursive) {
                 objectCache.Add(element);
