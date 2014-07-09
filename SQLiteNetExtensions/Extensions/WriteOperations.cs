@@ -85,22 +85,33 @@ namespace SQLiteNetExtensions.Extensions
 
         /// <summary>
         /// Deletes all the objects passed as parameters from the database.
-        /// Relationships are not taken into account in this method
+        /// If recursive flag is set to true, all relationships marked with 'CascadeDelete' will be
+        /// deleted from the database recursively. Inverse relationships and closed entity loops are handled
+        /// correctly to avoid endless loops
         /// </summary>
         /// <param name="conn">SQLite Net connection object</param>
+        /// <param name="recursive">If set to <c>true</c> all relationships marked with 'CascadeDelete' will be
+        /// deleted from the database recursively</param>
         /// <param name="objects">Objects to be deleted from the database</param>
-        /// <typeparam name="T">The Entity type, it should match de database entity type</typeparam>
-        public static void DeleteAll<T>(this SQLiteConnection conn, IEnumerable<T> objects) {
-            if (objects == null)
-                return;
+        public static void DeleteAll(this SQLiteConnection conn, IEnumerable objects, bool recursive = false) {
+            conn.DeleteAllRecursive(objects, recursive);
+        }
 
-            var type = typeof(T);
-            var primaryKeyProperty = type.GetPrimaryKey();
-
-            var primaryKeyValues = (from element in objects
-                select primaryKeyProperty.GetValue(element, null)).ToArray();
-                
-            conn.DeleteAllIds(primaryKeyValues, type.GetTableName(), primaryKeyProperty.GetColumnName());
+        /// <summary>
+        /// Deletes all the objects passed as parameters from the database.
+        /// If recursive flag is set to true, all relationships marked with 'CascadeDelete' will be
+        /// deleted from the database recursively. Inverse relationships and closed entity loops are handled
+        /// correctly to avoid endless loops
+        /// </summary>
+        /// <param name="conn">SQLite Net connection object</param>
+        /// <param name="recursive">If set to <c>true</c> all relationships marked with 'CascadeDelete' will be
+        /// deleted from the database recursively</param>
+        /// <param name="element">Object to be deleted from the database</param>
+        public static void DeleteAll(this SQLiteConnection conn, object element, bool recursive = false) {
+            if (recursive)
+                conn.DeleteAll(new []{ element }, recursive);
+            else
+                conn.Delete(element);
         }
 
         /// <summary>
@@ -234,7 +245,69 @@ namespace SQLiteNetExtensions.Extensions
                 conn.Insert(element);
         }
 
-        private static void RefreshForeignKeys<T>(T element)
+        static void DeleteAllRecursive(this SQLiteConnection conn, IEnumerable elements, bool recursive, ISet<object> objectCache = null) {
+            if (elements == null)
+                return;
+
+            var isRootElement = objectCache == null;
+            objectCache = objectCache ?? new HashSet<object>();
+
+            var elementList = elements.Cast<object>().ToList();
+
+            // Mark the objects for deletion
+            foreach (var element in elementList)
+                objectCache.Add(element);
+
+            if (recursive)
+            {
+                foreach (var element in elementList)
+                {
+                    var type = element.GetType();
+                    foreach (var relationshipProperty in type.GetRelationshipProperties())
+                    {
+                        var relationshipAttribute = relationshipProperty.GetAttribute<RelationshipAttribute>();
+
+                        // Ignore read-only attributes or those that are not marked as CascadeDelete
+                        if (!relationshipAttribute.IsCascadeDelete || relationshipAttribute.ReadOnly)
+                            continue;
+
+                        var value = relationshipProperty.GetValue(element);
+                        conn.DeleteValueRecursive(value, recursive, objectCache);
+                    }
+                }
+            }
+
+            // To improve performance, the root method call will delete all the objects at once
+            if (isRootElement) {
+                conn.DeleteAllObjects(objectCache);
+            }
+        }
+
+        static void DeleteValueRecursive(this SQLiteConnection conn, object value, bool recursive, ISet<object> objectCache) {
+            if (value == null)
+                return;
+
+            var enumerable = value as IEnumerable ?? new [] { value };
+            conn.DeleteAllRecursive(enumerable, recursive, objectCache);
+        }
+
+        static void DeleteAllObjects(this SQLiteConnection conn, IEnumerable elements) {
+            if (elements == null)
+                return;
+
+            var groupedElements = elements.Cast<object>().GroupBy(o => o.GetType());
+            foreach (var groupElement in groupedElements)
+            {
+                var type = groupElement.Key;
+                var primaryKeyProperty = type.GetPrimaryKey();
+                Assert(primaryKeyProperty != null, type, null, "Cannot delete objects without primary key");
+                var primaryKeyValues = (from element in groupedElements
+                                                    select primaryKeyProperty.GetValue(element, null)).ToArray();
+                conn.DeleteAllIds(primaryKeyValues, type.GetTableName(), primaryKeyProperty.GetColumnName());
+            }
+        }
+
+        private static void RefreshForeignKeys(object element)
         {
             var type = element.GetType();
             foreach (var relationshipProperty in type.GetRelationshipProperties())
