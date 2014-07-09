@@ -84,6 +84,38 @@ namespace SQLiteNetExtensions.Extensions
         }
 
         /// <summary>
+        /// Inserts all the elements and all the relationships that are annotated with <c>CascadeOperation.CascadeInsert</c>
+        /// into the database. If any element already exists in the database a 'Constraint' exception will be raised.
+        /// Elements with a primary key that it's not <c>AutoIncrement</c> will need a valid identifier before calling
+        /// this method.
+        /// If the <c>recursive</c> flag is set to true, all the relationships annotated with
+        /// <c>CascadeOperation.CascadeInsert</c> are inserted recursively in the database. This method will handle
+        /// loops and inverse relationships correctly. <c>ReadOnly</c> properties will be omitted.
+        /// </summary>
+        /// <param name="conn">SQLite Net connection object</param>
+        /// <param name="elements">Objects to be inserted.</param>
+        /// <param name="recursive">If set to <c>true</c> all the insert-cascade properties will be inserted</param>
+        public static void InsertAllWithChildren(this SQLiteConnection conn, IEnumerable elements, bool recursive = false) {
+            conn.InsertAllWithChildrenRecursive(elements, false, recursive);
+        }
+
+        /// <summary>
+        /// Inserts or replace all the elements and all the relationships that are annotated with
+        /// <c>CascadeOperation.CascadeInsert</c> into the database. If any element already exists in the database
+        /// it will be replaced. Elements with <c>AutoIncrement</c> primary keys that haven't been assigned will
+        /// be always inserted instead of replaced.
+        /// If the <c>recursive</c> flag is set to true, all the relationships annotated with
+        /// <c>CascadeOperation.CascadeInsert</c> are inserted recursively in the database. This method will handle
+        /// loops and inverse relationships correctly. <c>ReadOnly</c> properties will be omitted.
+        /// </summary>
+        /// <param name="conn">SQLite Net connection object</param>
+        /// <param name="elements">Objects to be inserted.</param>
+        /// <param name="recursive">If set to <c>true</c> all the insert-cascade properties will be inserted</param>
+        public static void InsertOrReplaceAllWithChildren(this SQLiteConnection conn, IEnumerable elements, bool recursive = false) {
+            conn.InsertAllWithChildrenRecursive(elements, true, recursive);
+        }
+
+        /// <summary>
         /// Deletes all the objects passed as parameters from the database.
         /// If recursive flag is set to true, all relationships marked with 'CascadeDelete' will be
         /// deleted from the database recursively. Inverse relationships and closed entity loops are handled
@@ -134,6 +166,7 @@ namespace SQLiteNetExtensions.Extensions
             if (elements == null)
                 return;
 
+            objectCache = objectCache ?? new HashSet<object>();
             var insertedElements = conn.InsertElements(elements, replace, objectCache).Cast<object>().ToList();
                 
             foreach (var element in insertedElements) {
