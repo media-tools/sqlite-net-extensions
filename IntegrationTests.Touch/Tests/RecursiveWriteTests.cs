@@ -935,18 +935,10 @@ namespace SQLiteNetExtensions.IntegrationTests
             anthony.FollowingUsers = new List<TwitterUser>{ peter };
             peter.FollowingUsers = new List<TwitterUser>{ martha };
 
-            var outerUsers = new []{ jaime, mark, claire, will };
-            conn.InsertAll(outerUsers);
-
-            // Insert the entity tree starting from Thomas
-            conn.InsertWithChildren(thomas, recursive: true);
-
-            // Update relationships of Users outside of the tree
-            foreach (var user in outerUsers) {
-                conn.UpdateWithChildren(user);
-            }
-
             var allUsers = new []{ john, thomas, will, claire, jaime, mark, martha, anthony, peter };
+
+            // Only need to insert Jaime and Claire, the other users are contained in these trees
+            conn.InsertAllWithChildren(new []{ jaime, claire }, recursive: true);
 
             Action<TwitterUser, TwitterUser> checkUser = (expected, obtained) =>
             {
@@ -1024,10 +1016,6 @@ namespace SQLiteNetExtensions.IntegrationTests
             var anthony = new TwitterUser { Name = "anthony" };
             var peter = new TwitterUser { Name = "Peter" };
 
-            var allUsers = new []{ john, thomas, will, claire, jaime, mark, martha, anthony, peter };
-
-            conn.InsertAll(allUsers);
-
             john.FollowingUsers = new List<TwitterUser>{ peter, thomas };
             thomas.FollowingUsers = new List<TwitterUser>{ john };
             will.FollowingUsers = new List<TwitterUser>{ claire };
@@ -1038,10 +1026,12 @@ namespace SQLiteNetExtensions.IntegrationTests
             anthony.FollowingUsers = new List<TwitterUser>{ peter };
             peter.FollowingUsers = new List<TwitterUser>{ martha };
 
-            foreach (var user in allUsers) {
-                conn.UpdateWithChildren(user);
-            }
+            var allUsers = new []{ john, thomas, will, claire, jaime, mark, martha, anthony, peter };
 
+            // Inserts all the objects in the database recursively
+            conn.InsertAllWithChildren(allUsers, recursive: true);
+
+            // Deletes the entity tree starting at 'Thomas' recursively
             conn.Delete(thomas, recursive: true);
 
             var expectedUsers = new []{ jaime, mark, claire, will };
