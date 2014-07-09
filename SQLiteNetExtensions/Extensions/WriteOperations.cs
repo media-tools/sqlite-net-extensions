@@ -421,7 +421,7 @@ namespace SQLiteNetExtensions.Extensions
 
         private static void UpdateManyToManyForeignKeys<T>(this SQLiteConnection conn, T element, PropertyInfo relationshipProperty)
         {
-            var type = typeof (T);
+            var type = element.GetType();
 
             EnclosedType enclosedType;
             var entityType = relationshipProperty.GetEntityType(out enclosedType);
