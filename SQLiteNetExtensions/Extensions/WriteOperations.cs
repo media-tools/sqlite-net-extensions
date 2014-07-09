@@ -271,7 +271,7 @@ namespace SQLiteNetExtensions.Extensions
                         if (!relationshipAttribute.IsCascadeDelete || relationshipAttribute.ReadOnly)
                             continue;
 
-                        var value = relationshipProperty.GetValue(element);
+                        var value = relationshipProperty.GetValue(element, null);
                         conn.DeleteValueRecursive(value, recursive, objectCache);
                     }
                 }
@@ -301,7 +301,7 @@ namespace SQLiteNetExtensions.Extensions
                 var type = groupElement.Key;
                 var primaryKeyProperty = type.GetPrimaryKey();
                 Assert(primaryKeyProperty != null, type, null, "Cannot delete objects without primary key");
-                var primaryKeyValues = (from element in groupedElements
+                var primaryKeyValues = (from element in groupElement
                                                     select primaryKeyProperty.GetValue(element, null)).ToArray();
                 conn.DeleteAllIds(primaryKeyValues, type.GetTableName(), primaryKeyProperty.GetColumnName());
             }

@@ -73,7 +73,7 @@ namespace SQLiteNetExtensions.IntegrationTests
             var elementsToDelete = new List<DummyClassGuidPK> { elementA, elementC };
 
             // Delete elements from the database
-            conn.DeleteAll<DummyClassGuidPK>(elementsToDelete);
+            conn.DeleteAll(elementsToDelete);
 
             // Verify that the elements have been deleted correctly
             Assert.AreEqual(elementsList.Count - elementsToDelete.Count, conn.Table<DummyClassGuidPK>().Count());
@@ -118,7 +118,7 @@ namespace SQLiteNetExtensions.IntegrationTests
             var elementsToDelete = new List<DummyClassIntPK> { elementA, elementC };
 
             // Delete elements from the database
-            conn.DeleteAll<DummyClassIntPK>(elementsToDelete);
+            conn.DeleteAll(elementsToDelete);
 
             // Verify that the elements have been deleted correctly
             Assert.AreEqual(elementsList.Count - elementsToDelete.Count, conn.Table<DummyClassIntPK>().Count());
