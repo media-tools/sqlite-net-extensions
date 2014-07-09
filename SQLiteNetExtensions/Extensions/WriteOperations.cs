@@ -41,8 +41,7 @@ namespace SQLiteNetExtensions.Extensions
         /// </summary>
         /// <param name="conn">SQLite Net connection object</param>
         /// <param name="element">Object to be updated. Must already have been inserted in the database</param>
-        /// <typeparam name="T">The Entity type, it should match de database entity type</typeparam>
-        public static void UpdateWithChildren<T>(this SQLiteConnection conn, T element)
+        public static void UpdateWithChildren(this SQLiteConnection conn, object element)
         {
             // Update the current element
             RefreshForeignKeys(element);
@@ -64,8 +63,7 @@ namespace SQLiteNetExtensions.Extensions
         /// <param name="conn">SQLite Net connection object</param>
         /// <param name="element">Object to be inserted.</param>
         /// <param name="recursive">If set to <c>true</c> all the insert-cascade properties will be inserted</param>
-        /// <typeparam name="T">The Entity type, it should match de database entity type</typeparam>
-        public static void InsertWithChildren<T>(this SQLiteConnection conn, T element, bool recursive = false) {
+        public static void InsertWithChildren(this SQLiteConnection conn, object element, bool recursive = false) {
             conn.InsertWithChildrenRecursive(element, false, recursive);
         }
 
@@ -81,8 +79,7 @@ namespace SQLiteNetExtensions.Extensions
         /// <param name="conn">SQLite Net connection object</param>
         /// <param name="element">Object to be inserted.</param>
         /// <param name="recursive">If set to <c>true</c> all the insert-cascade properties will be inserted</param>
-        /// <typeparam name="T">The Entity type, it should match de database entity type</typeparam>
-        public static void InsertOrReplaceWithChildren<T>(this SQLiteConnection conn, T element, bool recursive = false) {
+        public static void InsertOrReplaceWithChildren(this SQLiteConnection conn, object element, bool recursive = false) {
             conn.InsertWithChildrenRecursive(element, true, recursive);
         }
 
@@ -276,7 +273,7 @@ namespace SQLiteNetExtensions.Extensions
         }
 
 
-        private static void UpdateInverseForeignKeys<T>(this SQLiteConnection conn, T element)
+        private static void UpdateInverseForeignKeys(this SQLiteConnection conn, object element)
         {
             foreach (var relationshipProperty in element.GetType().GetRelationshipProperties())
             {
@@ -301,7 +298,7 @@ namespace SQLiteNetExtensions.Extensions
             }
         }
             
-        private static void UpdateOneToManyInverseForeignKey<T>(this SQLiteConnection conn, T element, PropertyInfo relationshipProperty)
+        private static void UpdateOneToManyInverseForeignKey(this SQLiteConnection conn, object element, PropertyInfo relationshipProperty)
         {
             var type = element.GetType();
 
@@ -358,7 +355,7 @@ namespace SQLiteNetExtensions.Extensions
             conn.Execute(deleteQuery, parameters.ToArray());
         }
 
-        private static void UpdateOneToOneInverseForeignKey<T>(this SQLiteConnection conn, T element, PropertyInfo relationshipProperty)
+        private static void UpdateOneToOneInverseForeignKey(this SQLiteConnection conn, object element, PropertyInfo relationshipProperty)
         {
             var type = element.GetType();
 
@@ -419,7 +416,7 @@ namespace SQLiteNetExtensions.Extensions
             }
         }
 
-        private static void UpdateManyToManyForeignKeys<T>(this SQLiteConnection conn, T element, PropertyInfo relationshipProperty)
+        private static void UpdateManyToManyForeignKeys(this SQLiteConnection conn, object element, PropertyInfo relationshipProperty)
         {
             var type = element.GetType();
 
