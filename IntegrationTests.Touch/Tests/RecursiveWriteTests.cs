@@ -853,7 +853,7 @@ namespace SQLiteNetExtensions.IntegrationTests
             public string Name { get; set; }
 
             [ManyToMany(typeof(FollowerLeaderRelationshipTable), "LeaderId", "Followers",
-                CascadeOperations = CascadeOperation.CascadeRead | CascadeOperation.CascadeInsert)]
+                CascadeOperations = CascadeOperation.All)]
             public List<TwitterUser> FollowingUsers { get; set; }
 
             // ReadOnly is required because we're not specifying the followers manually, but want to obtain them from database
@@ -869,6 +869,10 @@ namespace SQLiteNetExtensions.IntegrationTests
             {
                 return Name.GetHashCode();
             }
+            public override string ToString()
+            {
+                return string.Format("[TwitterUser: Id={0}, Name={1}]", Id, Name);
+            }
         }
 
         // Intermediate class, not used directly anywhere in the code, only in ManyToMany attributes and table creation
@@ -881,7 +885,7 @@ namespace SQLiteNetExtensions.IntegrationTests
         public void TestManyToManyRecursiveInsertWithSameClassRelationship() {
             // We will configure the following scenario
             // 'John' follows 'Peter' and 'Thomas'
-            // 'Thomas' follows 'John' and 'Jaime'
+            // 'Thomas' follows 'John'
             // 'Will' follows 'Claire'
             // 'Claire' follows 'Will'
             // 'Jaime' follows 'Peter', 'Thomas' and 'Mark'
@@ -895,14 +899,12 @@ namespace SQLiteNetExtensions.IntegrationTests
             // 'Followed by' branches will be ignored in the insert method because the property doesn't have the
             // 'CascadeInsert' operation and it's marked as ReadOnly
             //
-            // We'll insert 'Jaime', 'Claire' and 'Will' manually because they're outside the 'Thomas' tree
+            // We'll insert 'Jaime', 'Mark', 'Claire' and 'Will' manually because they're outside the 'Thomas' tree
             //
             // Cascade operations should stop once the user has been inserted once
             // So, more or less, the cascade operation tree will be the following (order may not match)
             // 'Thomas' |-(follows)>  'John' |-(follows)> 'Peter' |-(follows)> 'Martha' |-(follows)> 'Anthony' |-(follows)-> 'Peter'*
-            //          |                    |-(follows)> 'Thomas'*
-            //          |
-            //          |-(follows)>  'Thomas'*
+            //                               |-(follows)> 'Thomas'*
             //
             //
             // (*) -> Entity already inserted in a previous operation. Stop cascade insert
@@ -924,7 +926,7 @@ namespace SQLiteNetExtensions.IntegrationTests
             var peter = new TwitterUser { Name = "Peter" };
 
             john.FollowingUsers = new List<TwitterUser>{ peter, thomas };
-            thomas.FollowingUsers = new List<TwitterUser>{ john, jaime };
+            thomas.FollowingUsers = new List<TwitterUser>{ john };
             will.FollowingUsers = new List<TwitterUser>{ claire };
             claire.FollowingUsers = new List<TwitterUser>{ will };
             jaime.FollowingUsers = new List<TwitterUser>{ peter, thomas, mark };
@@ -933,8 +935,16 @@ namespace SQLiteNetExtensions.IntegrationTests
             anthony.FollowingUsers = new List<TwitterUser>{ peter };
             peter.FollowingUsers = new List<TwitterUser>{ martha };
 
-            conn.InsertAll(new []{ jaime, claire, will });
+            var outerUsers = new []{ jaime, mark, claire, will };
+            conn.InsertAll(outerUsers);
+
+            // Insert the entity tree starting from Thomas
             conn.InsertWithChildren(thomas, recursive: true);
+
+            // Update relationships of Users outside of the tree
+            foreach (var user in outerUsers) {
+                conn.UpdateWithChildren(user);
+            }
 
             var allUsers = new []{ john, thomas, will, claire, jaime, mark, martha, anthony, peter };
 
@@ -968,6 +978,77 @@ namespace SQLiteNetExtensions.IntegrationTests
             var obtainedMark = obtainedJaime.FollowingUsers.FirstOrDefault(u => u.Id == mark.Id);
             checkUser(mark, obtainedMark);
 
+        }
+
+        [Test]
+        public void TestManyToManyRecursiveDeleteWithSameClassRelationship() {
+            // We will configure the following scenario
+            // 'John' follows 'Peter' and 'Thomas'
+            // 'Thomas' follows 'John'
+            // 'Will' follows 'Claire'
+            // 'Claire' follows 'Will'
+            // 'Jaime' follows 'Peter', 'Thomas' and 'Mark'
+            // 'Mark' doesn't follow anyone
+            // 'Martha' follows 'Anthony'
+            // 'Anthony' follows 'Peter'
+            // 'Peter' follows 'Martha'
+            //
+            // Then, we will delete 'Thomas' and the other users will be deleted using cascade operations
+            //
+            // 'Followed by' branches will be ignored in the delete method because the property doesn't have the
+            // 'CascadeDelete' operation and it's marked as ReadOnly
+            //
+            // 'Jaime', 'Mark', 'Claire' and 'Will' won't be deleted because they're outside the 'Thomas' tree
+            //
+            // Cascade operations should stop once the user has been marked for deletion once
+            // So, more or less, the cascade operation tree will be the following (order may not match)
+            // 'Thomas' |-(follows)>  'John' |-(follows)> 'Peter' |-(follows)> 'Martha' |-(follows)> 'Anthony' |-(follows)-> 'Peter'*
+            //                               |-(follows)> 'Thomas'*
+            //
+            //
+            // (*) -> Entity already marked for deletion in a previous operation. Stop cascade delete
+
+            var conn = Utils.CreateConnection();
+            conn.DropTable<TwitterUser>();
+            conn.DropTable<FollowerLeaderRelationshipTable>();
+            conn.CreateTable<TwitterUser>();
+            conn.CreateTable<FollowerLeaderRelationshipTable>();
+
+            var john = new TwitterUser { Name = "John" };
+            var thomas = new TwitterUser { Name = "Thomas" };
+            var will = new TwitterUser { Name = "Will" };
+            var claire = new TwitterUser { Name = "Claire" };
+            var jaime = new TwitterUser { Name = "Jaime" };
+            var mark = new TwitterUser { Name = "Mark" };
+            var martha = new TwitterUser { Name = "Martha" };
+            var anthony = new TwitterUser { Name = "anthony" };
+            var peter = new TwitterUser { Name = "Peter" };
+
+            var allUsers = new []{ john, thomas, will, claire, jaime, mark, martha, anthony, peter };
+
+            conn.InsertAll(allUsers);
+
+            john.FollowingUsers = new List<TwitterUser>{ peter, thomas };
+            thomas.FollowingUsers = new List<TwitterUser>{ john };
+            will.FollowingUsers = new List<TwitterUser>{ claire };
+            claire.FollowingUsers = new List<TwitterUser>{ will };
+            jaime.FollowingUsers = new List<TwitterUser>{ peter, thomas, mark };
+            mark.FollowingUsers = new List<TwitterUser>();
+            martha.FollowingUsers = new List<TwitterUser>{ anthony };
+            anthony.FollowingUsers = new List<TwitterUser>{ peter };
+            peter.FollowingUsers = new List<TwitterUser>{ martha };
+
+            foreach (var user in allUsers) {
+                conn.UpdateWithChildren(user);
+            }
+
+            conn.Delete(thomas, recursive: true);
+
+            var expectedUsers = new []{ jaime, mark, claire, will };
+            var existingUsers = conn.Table<TwitterUser>().ToList();
+
+            // Check that the users have been deleted and only the users outside the 'Thomas' tree still exist
+            Assert.That(existingUsers, Is.EquivalentTo(expectedUsers));
         }
         #endregion
     }

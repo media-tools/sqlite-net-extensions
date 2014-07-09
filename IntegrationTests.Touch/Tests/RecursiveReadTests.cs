@@ -353,7 +353,7 @@ namespace SQLiteNetExtensions.IntegrationTests
         public void TestManyToManyCascadeWithSameClassRelationship() {
             // We will configure the following scenario
             // 'John' follows 'Peter' and 'Thomas'
-            // 'Thomas' follows 'John' and 'Jaime'
+            // 'Thomas' follows 'John'
             // 'Will' follows 'Claire'
             // 'Claire' follows 'Will'
             // 'Jaime' follows 'Peter', 'Thomas' and 'Mark'
@@ -376,12 +376,9 @@ namespace SQLiteNetExtensions.IntegrationTests
             //          |                    |-(follows)> 'Thomas'*
             //          |                    |-(followed by)> 'Thomas'*
             //          |
-            //          |-(follows)>  'Thomas'*
-            //          |
             //          |-(followed by)> 'Jaime' |-(follows)> 'Peter'*
             //          |                        |-(follows)> 'Thomas'*
             //          |                        |-(follows)> 'Mark' |-(followed by)> 'Jaime'*
-            //          |                        |-(followrd by)> 'Thomas'*
             //          |-(followed by)> 'John'*
             //
             // (*) -> Entity already loaded in a previous operation. Stop cascade loading
@@ -406,7 +403,7 @@ namespace SQLiteNetExtensions.IntegrationTests
             conn.InsertAll(allUsers);
 
             john.FollowingUsers = new List<TwitterUser>{ peter, thomas };
-            thomas.FollowingUsers = new List<TwitterUser>{ john, jaime };
+            thomas.FollowingUsers = new List<TwitterUser>{ john };
             will.FollowingUsers = new List<TwitterUser>{ claire };
             claire.FollowingUsers = new List<TwitterUser>{ will };
             jaime.FollowingUsers = new List<TwitterUser>{ peter, thomas, mark };
