@@ -139,7 +139,7 @@ namespace SQLiteNetExtensions.Extensions
         /// <param name="recursive">If set to <c>true</c> all relationships marked with 'CascadeDelete' will be
         /// deleted from the database recursively</param>
         /// <param name="element">Object to be deleted from the database</param>
-        public static void Delete(this SQLiteConnection conn, object element, bool recursive = false) {
+        public static void Delete(this SQLiteConnection conn, object element, bool recursive) {
             if (recursive)
                 conn.DeleteAll(new []{ element }, recursive);
             else
