@@ -46,7 +46,7 @@ Then you obtain the Valuations for a specific Stock query like this:
 
 With SQLite-Net extensions, no more need to write the queries manually, just specify the relationships in the entities:
 
-    public class Stock    {        [PrimaryKey, AutoIncrement]        public int Id { get; set; }        [MaxLength(8)]        public string Symbol { get; set; }        [OneToMany]      // One to many relationship with Valuation        public List<Valuation> Valuations { get; set; }    }    public class Valuation    {        [PrimaryKey, AutoIncrement]        public int Id { get; set; }        [ForeignKey(typeof(Stock))]     // Specify the foreign key        public int StockId { get; set; }        public DateTime Time { get; set; }        public decimal Price { get; set; }        [ManyToOne]      // Many to one relationship with Stock        public Stock Stock { get; set; }    }
+    public class Stock    {        [PrimaryKey, AutoIncrement]        public int Id { get; set; }        [MaxLength(8)]        public string Symbol { get; set; }        [OneToMany(CascadeOperations = CascadeOperation.All)]      // One to many relationship with Valuation        public List<Valuation> Valuations { get; set; }    }    public class Valuation    {        [PrimaryKey, AutoIncrement]        public int Id { get; set; }        [ForeignKey(typeof(Stock))]     // Specify the foreign key        public int StockId { get; set; }        public DateTime Time { get; set; }        public decimal Price { get; set; }        [ManyToOne]      // Many to one relationship with Stock        public Stock Stock { get; set; }    }
 
 SQLite-Net Extensions will find all the properties with a relationship attribute and then find the foreign keys and inverse attributes with the matching type for them.
 
@@ -55,16 +55,40 @@ Note that `Stock.Valuations` property is a `OneToMany` relationship to `Valuatio
 #### Read and write operations
 Here's how we'll create, read and update the entities:
 
-    var db = new SQLiteConnection("database.sqlitedb");    db.CreateTable<Stock>();    db.CreateTable<Valuation>();    var euro = new Stock()        {            Symbol = "€"        };    db.Insert(euro);   // Insert the object in the database    var valuation = new Valuation()        {            Price = 15,            Time = DateTime.Now,        };    db.Insert(valuation);   // Insert the object in the database    // Objects created, let's stablish the relationship    euro.Valuations = new List<Valuation> { valuation };    db.UpdateWithChildren(euro);   // Update the changes into the database    if (valuation.Stock == euro)    {        Debug.WriteLine("Inverse relationship already set, yay!");    }    // Get the object and the relationships    var storedValuation = db.GetWithChildren<Valuation>(valuation.Id);    if (euro.Symbol.Equals(storedValuation.Stock.Symbol))    {        Debug.WriteLine("Object and relationships loaded correctly!");    }
+    var db = Utils.CreateConnection();    db.CreateTable<Stock>();    db.CreateTable<Valuation>();    var euro = new Stock() {        Symbol = "€"    };    db.Insert(euro);   // Insert the object in the database    var valuation = new Valuation() {        Price = 15,        Time = DateTime.Now,    };    db.Insert(valuation);   // Insert the object in the database    // Objects created, let's stablish the relationship    euro.Valuations = new List<Valuation> { valuation };    db.UpdateWithChildren(euro);   // Update the changes into the database    if (valuation.Stock == euro) {        Debug.WriteLine("Inverse relationship already set, yay!");    }    // Get the object and the relationships    var storedValuation = db.GetWithChildren<Valuation>(valuation.Id);    if (euro.Symbol.Equals(storedValuation.Stock.Symbol)) {        Debug.WriteLine("Object and relationships loaded correctly!");    }
+        
+We've specified `AutoIncrement` primary keys, so we have to insert the objects to the database first to be assigned a correct primary key before stablishing the relationships.
 
-We've specified `AutoIncrement` primary keys, so we have to insert the objects to the database first to be assigned a correct primary key before stablishing the relationships.    
-## Some action
-Probably *one-to-one* relationships aren't the reason that you are reading this, so let's prepare a more complete scenario using all the different kind of relationships:
+##### Using recursive operations
+The complexity of the sample can be reduced using recursive operations, that are explained in detail below. As we can see in the `Stock` class defined above, we've already specified cascade operations for the `Valuations` property, so we can use cascade operations to make the previous method easier as we don't need to manually insert the objects one by one in the database:
 
-  
-    public class Student    {        [PrimaryKey, AutoIncrement]        public int StudentId { get; set; }            public string Name { get; set; }        public int Age { get; set; }            [ManyToMany(typeof(StudentsGroups))]        public List<Group> Groups { get; set; }            public int TutorId { get; set; }        [ManyToOne("TutorId")] // Foreign key may be specified in the relationship        public Teacher Tutor { get; set; }    }        public class Teacher    {        [PrimaryKey, AutoIncrement]        public int Id { get; set; }            public string Name { get; set; }            [OneToMany]        public List<Group> Groups { get; set; }            [OneToOne]        public Calendar Calendar { get; set; }    }        public class Subject    {        [PrimaryKey, AutoIncrement]        public int Id { get; set; }            public string SubjectName { get; set; }    }        public class Group    {        [PrimaryKey, AutoIncrement]        public int Id { get; set; }            public string GroupName { get; set; }            [ForeignKey(typeof(Teacher))]        public int TeacherId { get; set; }            [ManyToOne]        public Teacher Teacher { get; set; }            [ManyToMany(typeof(StudentsGroups))]        public List<Student> Students { get; set; }     }        public class Calendar    {        [PrimaryKey, AutoIncrement]        public int Id { get; set; }            [ForeignKey(typeof(Teacher))]        public int TeacherId { get; set; }            [OneToMany]        public List<Event> Events { get; set; }    }        public class Event    {        [PrimaryKey, AutoIncrement]        public int Id { get; set; }            public string Description { get; set; }        public string Notes { get; set; }        public DateTime Date { get; set; }            [ForeignKey(typeof(Calendar))]        public int CalendarId { get; set; }    }        public class StudentsGroups // Intermediate type required for many-to-many relationships    {        [ForeignKey(typeof(Student))]        public int StudentId { get; set; }            [ForeignKey(typeof(Group))]        public int GroupId { get; set; }    }
+    var db = Utils.CreateConnection();
+    db.CreateTable<Stock>();
+    db.CreateTable<Valuation>();
 
-Now try to imagine fetching and storing all these entities manually using **sqlite-net**...
+    var valuation = new Valuation {
+        Price = 15,
+        Time = DateTime.Now,
+    };
+
+    var euro = new Stock {
+        Symbol = "€",
+        Valuations = new List<Valuation> { valuation }
+    };
+
+    db.InsertWithChildren(euro);   // Insert the object in the database
+
+    if (valuation.Stock == euro) {
+        Debug.WriteLine("Inverse relationship already set, yay!");
+    }
+
+    // Get the object and the relationships
+    var storedValuation = db.GetWithChildren<Valuation>(valuation.Id);
+    if (euro.Symbol.Equals(storedValuation.Stock.Symbol)) {
+        Debug.WriteLine("Object and relationships loaded correctly!");
+    }
+    
+Recursive operations are explained in detail in the _Cascade operations_ section.
 
 
 ## Features
@@ -144,7 +168,102 @@ Text-blobbed properties cannot have relationships to other objects nor inverse r
 
 Example:
 
-    public class Address    {        public string StreetName { get; set; }        public string Number { get; set; }        public string PostalCode { get; set; }        public string Country { get; set; }    }    public class Person    {        public string Name { get; set; }        [TextBlob("PhonesBlobbed")]        public List<string> PhoneNumbers { get; set; }        [TextBlob("AddressesBlobbed")]        public List<Address> Addresses { get; set; }         public string PhonesBlobbed { get; set; } // serialized phone numbers        public string AddressesBlobbed { get; set; } // serialized addresses    }
+    public class Address    {        public string StreetName { get; set; }        public string Number { get; set; }        public string PostalCode { get; set; }        public string Country { get; set; }    }    public class Person    {        public string Name { get; set; }        [TextBlob("PhonesBlobbed")]        public List<string> PhoneNumbers { get; set; }        [TextBlob("AddressesBlobbed")]        public List<Address> Addresses { get; set; }         public string PhonesBlobbed { get; set; } // serialized phone numbers        public string AddressesBlobbed { get; set; } // serialized addresses    }
+    
+### Cascade operations
+For safety, all operations are not recursive by default, but most of them can be configured to work recursively. SQLite-Net Extensions provides mechanisms for handling inverse relationships, references to the same class and circular dependencies out-of-the-box, so you won't have to worry about it. To handle it, there's a new property in all relationship attributes called `CascadeOperations` that allows you to specify how that relationship should behave on cascade operations. Cascade operations can be combined using the binary _OR_ operator `|`, for example:
+	[OneToMany(CascadeOperations = CascadeOperation.CascadeRead | CascadeOperation.CascadeInsert)]
+#### Cascade read
+Cascade read operations allow you to fetch a complete relationship tree from the database starting at the object that you are fetching and continuing with all the relationships with `CascadeOperations` set to `CascadeRead`. To perform a fetch recursively, just set the optional `recursive` parameter of any read method to `true`:
+
+	public class Customer {
+        [PrimaryKey, AutoIncrement]
+        public int Id { get; set; }
+
+        public string Name { get; set; }
+
+        [OneToMany(CascadeOperations = CascadeOperation.CascadeRead)]
+        public Order[] Orders { get; set; }
+    }
+
+	...
+	    conn.GetWithChildren<Customer>(identifier, recursive: true);_Sample extracted from `RecursiveReadTests` and `RecursiveWriteTests` test classes_SQLite-Net Extensions will ensure that any object is loaded only once from the database and will resolve circular dependencies and inverse relationships while maintaining integral reference. This means that any returned object of the same class with the same identifier will be a reference to exactly the same object.
+#### Cascade insertCascade insert operations allows to you insert or replace objects recursively in the database without having to worry about inserting them before assigning the relationships and so on. To enable recursive insert, make sure that the relationship properties that you want to insert recursively have `CascadeOperations` set to `CascadeInsert`.
+
+Four different methods are used for recursively insert objects into the database: `InsertWithChildren`, `InsertOrReplaceWithChildren`, `InsertAllWithChildren` and `InsertOrReplaceAllWithChildren`, depending on the operation to be performed (_insert_ or _insert-or-replace_) and the number of elements (_one_ or _more_).
+
+SQLite-Net Extensions will not try to replace elements in the database which primary key is auto-incremental and hasn't been set yet. This will ensure that `InsertOrReplace` variant methods work as expected with initial inserts with auto-incremental primary keys.
+
+SQLite-Net Extensions will ensure that any object in the relationship tree is inserted once and only once. This makes this method work flawlessly with circular dependencies or inverse relationships.For example, using the same sample, we can change the `CascadeOperations` parameter to allow recursive insert:
+
+	public class Customer {
+        [PrimaryKey, AutoIncrement]
+        public int Id { get; set; }
+
+        public string Name { get; set; }
+
+        [OneToMany(CascadeOperations = CascadeOperation.CascadeInsert)]
+        public Order[] Orders { get; set; }
+    }
+
+	...
+    var customer = new Customer
+    { 
+        Name = "John Smith",
+        Orders = new []
+        {
+            new Order { Amount = 25.7f, Date = new DateTime(2014, 5, 15, 11, 30, 15) },
+            new Order { Amount = 15.2f, Date = new DateTime(2014, 3, 7, 13, 59, 1) },
+            new Order { Amount = 0.5f, Date = new DateTime(2014, 4, 5, 7, 3, 0) },
+            new Order { Amount = 106.6f, Date = new DateTime(2014, 7, 20, 21, 20, 24) },
+            new Order { Amount = 98f, Date = new DateTime(2014, 02, 1, 22, 31, 7) }
+        }
+    };
+
+    conn.InsertWithChildren(customer, recursive: true);_Sample extracted from `RecursiveReadTests` and `RecursiveWriteTests` test classes_
+
+Take into account that using `InsertOrReplaceWithChildren` to update a entity tree may impact performance as it will delete and re-insert all objects into the database regardless if they have been modified or not. It's recommended to keep track of the modified objects by yourself and update the objects calling `UpdateWithChildren` rather than calling `InsertOrReplaceWithChildren` to replace the object tree.#### Cascade deleteCascade delete operations allow you to delete a complete entity tree by just performing a simple operation. To enable recursive delete on a relationship property you have to set `CascadeOperations` property to `CascadeDelete` on that relationship attribute.
+Two different methods are provided for recursive deletion: `DeleteAll` and `Delete`. These methods already exist in vanilly SQLite-Net, just make sure to call the overloaded method with the `recursive` parameter set to `true`. `DeleteAll` is just a convenience method for deleting a list of objects, but it's recommended over iterating on `Delete` because it will make sure that the objects are only deleted once and will perform the deletion on a single SQL `delete` statement.
+SQLite-Net Extensions will handle circular references and inverse relationships correctly, and will only perform a `delete` statement for each class type to be deleted.
+For example, using the same sample, we can change the `CascadeOperations` parameter to allow recursive delete:
+
+	public class Customer {
+        [PrimaryKey, AutoIncrement]
+        public int Id { get; set; }
+
+        public string Name { get; set; }
+
+        [OneToMany(CascadeOperations = CascadeOperation.CascadeDelete)]
+        public Order[] Orders { get; set; }
+    }
+
+	...
+    var customer = conn.Get<Customer>(1234);
+    // All orders for this customer will be deleted from the database
+    conn.Delete(customer, recursive: true);_Sample extracted from `RecursiveReadTests` and `RecursiveWriteTests` test classes_### Read only properties
+Sometimes you just want a property to be loaded from database but you will never assign that property manually and you don't want it to be taken into account. This is when a `ReadOnly` property comes handy. By setting a relationship attribute `ReadOnly` flag, that property will only be read from the database and will be ignored for all insert or delete operations. This is particularly useful for handling inverse properties of `ManyToOne` or `ManyToMany`.
+For example, if you're implementing a Twitter client, you'll probably add followers to a user, but you'll never modify the inverse relationship manually:
+    public class TwitterUser {
+        [PrimaryKey, AutoIncrement]
+        public int Id { get; set; }
+
+        public string Name { get; set; }
+
+        [ManyToMany(typeof(FollowerLeaderRelationshipTable), "LeaderId", "Followers",
+            CascadeOperations = CascadeOperation.CascadeRead)]
+        public List<TwitterUser> FollowingUsers { get; set; }
+
+        // ReadOnly is required because we're not specifying the followers manually, but want to obtain them from database
+        [ManyToMany(typeof(FollowerLeaderRelationshipTable), "FollowerId", "FollowingUsers",
+            CascadeOperations = CascadeOperation.CascadeRead, ReadOnly = true)]
+        public List<TwitterUser> Followers { get; set; }
+    }
+
+    // Intermediate class, not used directly anywhere in the code, only in ManyToMany attributes and table creation
+    public class FollowerLeaderRelationshipTable {
+        public int LeaderId { get; set; }
+        public int FollowerId { get; set; }
+    }_Sample extracted from `RecursiveReadTests` and `RecursiveWriteTests` test classes_
 ### Foreign keys
 Foreign keys for a relationship are discovered on runtime using reflection matching the type of the relationship with the type specified in the `ForeignKey` attribute. 
 
@@ -162,8 +281,10 @@ Relationships are based in *foreign keys*. Foreign keys are just a reference to 
 
 Before calling `UpdateWithChildren` make sure you have inserted all referenced objects in the database and you will be fine.
 
+Using recursive insert operations will take this limitation into accound and it will handle it by itself.
+
 #### Inverse relationships are not loaded automatically on many-to-* relationships
-Because of *many-to-many* and *many-to-one* relationships inverse may reference to **a lot** of objects, they have to be loaded manually using `GetChildren` method. Only *one-to-one* and *one-to-many* inverse relationships will be loaded automatically.
+Because of *many-to-many* and *many-to-one* relationships inverse may reference to **a lot** of objects, they have to be loaded manually using `GetChildren` method. Only *one-to-one* and *one-to-many* inverse relationships will be loaded automatically. If you want to load *to_many* relationships automatically, you can use the cascade operations to load the entity tree recursively.
 
 #### Foreign keys are not updated automatically for removed references
 When you call to `UpdateWithChildren` method, it refreshes all the foreign keys based on the current relationships (including the inverse relationships), and stores the changes in the database. But if you remove a reference to an object, there's no way for SQLite-Net Extensions to know that you have an object in memory that wasn't referenced before. If you later call to `UpdateWithChildren` to the referenced object, you may find that the removed reference is unintentionally restored.
@@ -171,7 +292,7 @@ When you call to `UpdateWithChildren` method, it refreshes all the foreign keys 
 To keep a reference to the removed object it's recommended to reload the referenced object from the database.
 
 ## I want [moar](http://slappersonly.com/wordpress/wp-content/uploads/2013/02/moar.jpg)!!
-If you want to see some code in action, you can take a look at the Integration Tests. They are packed into a Xamarin.iOS project using NUnit Lite. Run it as a normal Xamarin.iOS App to execute the tests.
+I'd really recommend you to take a look at the Integration Tests project as it covers most of the use cases and contains lots of code. They are packed into a Xamarin.iOS project using NUnit Lite. Run it as a normal Xamarin.iOS App to execute the tests.
 
 > Those are my principles. If you don't like them I have others.
 
