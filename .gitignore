@@ -3,5 +3,6 @@
 *.suo
 *.DotSettings.user
 *.userprefs
+*.nupkg
 packages/*
 !packages/repositories.config
