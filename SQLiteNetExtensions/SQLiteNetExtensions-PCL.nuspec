@@ -1,0 +1,26 @@
+<?xml version="1.0"?>
+<package >
+  <metadata>
+    <id>SQLiteNetExtensions</id>
+    <version>1.0.0</version>
+    <title>SQLiteNetExtensions-PCL</title>
+    <authors>twincoders</authors>
+    <owners>twincoders</owners>
+    <licenseUrl>https://bitbucket.org/twincoders/sqlite-net-extensions</licenseUrl>
+    <projectUrl>https://bitbucket.org/twincoders/sqlite-net-extensions</projectUrl>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <description>SQLite-Net Extensions is a very simple ORM that provides one-to-one, one-to-many, many-to-one, many-to-many, inverse and text-blobbed relationships on top of the sqlite-net library."</description>
+    <releaseNotes></releaseNotes>
+    <copyright>Copyright 2014</copyright>
+    <dependencies>
+      <dependency id="Newtonsoft.Json" version="5.0.6" />
+    </dependencies>
+  </metadata>
+
+  <files>
+    <file src="bin\Release\SQLiteNetExtensions.dll" target="lib\portable-net45+sl5+netcore45+wp8+MonoAndroid1+MonoTouch1" />
+    <file src="bin\Release\SQLiteNetExtensions.pdb" target="lib\portable-net45+sl5+netcore45+wp8+MonoAndroid1+MonoTouch1" />
+    <file src="**\*.cs" target="src" />
+  </files>
+
+</package>
