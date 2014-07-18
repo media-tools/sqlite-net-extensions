@@ -2,7 +2,7 @@
 <package >
   <metadata>
     <id>SQLiteNetExtensions</id>
-    <version>1.0.0</version>
+    <version>1.1.0</version>
     <title>SQLiteNetExtensions-PCL</title>
     <authors>twincoders</authors>
     <owners>twincoders</owners>
@@ -13,7 +13,8 @@
     <releaseNotes></releaseNotes>
     <copyright>Copyright 2014</copyright>
     <dependencies>
-      <dependency id="Newtonsoft.Json" version="5.0.6" />
+      <dependency id="Newtonsoft.Json" version="6.0.3" />
+      <dependency id="SQLite.Net-PCL" version="2.3.0" />
     </dependencies>
   </metadata>
 
