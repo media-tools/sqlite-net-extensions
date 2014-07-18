@@ -19,15 +19,17 @@ Complementarily `UpdateWithChildren` looks at the relationships that you have se
 You can update foreign keys manually if you feel more comfortable handling some relationships by yourself and let the SQLite-Net extensions handle the rest for you. You can even add or remove SQLite-Net extensions of any project at any time without changes to your database.
 
 ## Installation
+The easiest way of installing the library in your project is adding a reference to [_SQLiteNetExtensions_ NuGet package](https://www.nuget.org/packages/SQLiteNetExtensions/).
+
 SQLite-Net Extensions is provided in three different flavours, depending on the SQLite-Net version that you are using:
 
 - [SQLite-Net PCL](https://github.com/oysteinkrog/SQLite.Net-PCL) version (also as [NuGet package](https://www.nuget.org/packages/SQLite.Net-PCL/))
 - [MvvmCross SQLite Community](https://github.com/MvvmCross/MvvmCross-SQLite PCL) version (also as [NuGet package](https://www.nuget.org/packages/MvvmCross.Community.Plugin.Sqlite/))
 - [SQLite-Net standard](https://github.com/praeclarum/sqlite-net) version (also as [NuGet package](https://www.nuget.org/packages/sqlite-net))
 
-Currently the recommended version is the official SQLite-Net PCL NuGet package. If you are using this SQLite-Net version, you can simply add a reference to the pre-compiled DLL that can be found in the [Downloads page](https://bitbucket.org/twincoders/sqlite-net-extensions/downloads).
+Currently the recommended version is the official SQLite-Net PCL NuGet package. If you are using this SQLite-Net version, you can simply add a reference to [_SQLiteNetExtensions_ NuGet package](https://www.nuget.org/packages/SQLiteNetExtensions/).
 
-Otherwise, you can compile the sources by yourself and add the reference to your newly compiled DLL or add SQLite-Net Extensions project as a dependency to your code.
+Otherwise, you can download and compile the sources by yourself and add the reference to your newly compiled DLL or add SQLite-Net Extensions project as a dependency to your code.
 
 
 ## Some code
