@@ -2,7 +2,7 @@
 <package >
   <metadata>
     <id>SQLiteNetExtensions</id>
-    <version>1.1.0</version>
+    <version>1.1.1</version>
     <title>SQLite.Net Extensions-PCL</title>
     <authors>TwinCoders</authors>
     <owners>TwinCoders</owners>
