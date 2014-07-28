@@ -20,8 +20,8 @@
   </metadata>
 
   <files>
-    <file src="bin/Release/SQLiteNetExtensions.dll" target="lib/portable-net45+sl5+netcore45+wp8+MonoAndroid1+MonoTouch1" />
-    <file src="**/*.cs" target="src" />
+    <file src="SQLiteNetExtensions/bin/Release/SQLiteNetExtensions.dll" target="lib/portable-net45+sl5+netcore45+wp8+MonoAndroid1+MonoTouch1" />
+    <file src="SQLiteNetExtensions/**/*.cs" target="src" />
   </files>
 
 </package>
