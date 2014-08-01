@@ -29,7 +29,14 @@ SQLite-Net Extensions is provided in three different flavours, depending on the 
 
 Currently the recommended version is the official SQLite-Net PCL NuGet package. If you are using this SQLite-Net version, you can simply add a reference to [_SQLiteNetExtensions_ NuGet package](https://www.nuget.org/packages/SQLiteNetExtensions/).
 
+There's also [a PCL NuGet package](https://www.nuget.org/packages/SQLiteNetExtensions-MvvmCross/) for users of MvvmCross SQLite Community plugin.
+
 Otherwise, you can download and compile the sources by yourself and add the reference to your newly compiled DLL or add SQLite-Net Extensions project as a dependency to your code.
+
+## Get help
+The best way to get help is searching [StackOverflow](http://stackoverflow.com) for already existing answers of your problem or asking your own question and tagging it with [`sqlite-net-extensions` tag](http://stackoverflow.com/questions/tagged/sqlite-net-extensions).
+
+If you find a bug or have a suggestion or feature request. Feel free to create a new ticket in the [issue tracker](https://bitbucket.org/twincoders/sqlite-net-extensions/issues?status=new&status=open) if it doesn't already exist.
 
 
 ## Some code
