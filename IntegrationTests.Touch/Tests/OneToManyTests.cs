@@ -706,5 +706,48 @@ namespace SQLiteNetExtensions.IntegrationTests
 
         }
 
+        public class Employee
+        {
+            [PrimaryKey, AutoIncrement]
+            public int Id { get; set; }
+
+            public string Name { get; set; }
+
+            [OneToMany]
+            public List<Employee> Subordinates { get; set; }
+
+            [ManyToOne]
+            public Employee Supervisor { get; set; }
+
+            [ForeignKey(typeof(Employee))]
+            public int SupervisorId { get; set; }
+        }
+
+        /// <summary>
+        /// Tests the recursive inverse relationship automatic discovery
+        /// Issue #17: https://bitbucket.org/twincoders/sqlite-net-extensions/issue/17
+        /// </summary>
+        [Test]
+        public void TestRecursiveInverseRelationship() {
+            var conn = Utils.CreateConnection();
+            conn.DropTable<Employee>();
+            conn.CreateTable<Employee>();
+
+            var employee1 = new Employee { 
+                Name = "Albert" 
+            };
+            conn.Insert(employee1);
+
+            var employee2 = new Employee {
+                Name = "Leonardo",
+                SupervisorId = employee1.Id
+            };
+            conn.Insert(employee2);
+
+            var result = conn.GetWithChildren<Employee>(employee1.Id);
+            Assert.AreEqual(employee1, result);
+            Assert.That(employee1.Subordinates.Select(e => e.Name), Contains.Item(employee2.Name));
+        }
+
     }
 }
