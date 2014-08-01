@@ -727,7 +727,7 @@ namespace SQLiteNetExtensions.IntegrationTests
         /// Tests the recursive inverse relationship automatic discovery
         /// Issue #17: https://bitbucket.org/twincoders/sqlite-net-extensions/issue/17
         /// </summary>
-        [Test]
+        [Test][NUnit.Framework.Ignore]
         public void TestRecursiveInverseRelationship() {
             var conn = Utils.CreateConnection();
             conn.DropTable<Employee>();
