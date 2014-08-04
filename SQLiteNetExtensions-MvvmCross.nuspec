@@ -1,0 +1,27 @@
+<?xml version="1.0"?>
+<package >
+  <metadata>
+    <id>SQLiteNetExtensions-MvvmCross</id>
+    <version>1.1.1</version>
+    <title>SQLite.Net Extensions-MvvmCross</title>
+    <authors>TwinCoders</authors>
+    <owners>TwinCoders</owners>
+    <licenseUrl>https://bitbucket.org/twincoders/sqlite-net-extensions</licenseUrl>
+    <projectUrl>https://bitbucket.org/twincoders/sqlite-net-extensions</projectUrl>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <description>SQLite-Net Extensions is a very simple ORM that provides cascade operations, one-to-one, one-to-many, many-to-one, many-to-many, inverse and text-blobbed relationships on top of the sqlite-net library.</description>
+    <releaseNotes></releaseNotes>
+    <copyright>TwinCoders 2014</copyright>
+    <tags>sqlite sqlite-net net extensions orm cascade recursive</tags>
+    <dependencies>
+      <dependency id="Newtonsoft.Json" version="6.0.3" />
+      <dependency id="MvvmCross.Community.Plugin.Sqlite" version="3.1.1" />
+    </dependencies>
+  </metadata>
+
+  <files>
+    <file src="MvvmCross/SQLiteNetExtensions-MvvmCross/bin/Release/SQLiteNetExtensions-MvvmCross.dll" target="lib/portable-net45+sl5+netcore45+wp8+MonoAndroid1+MonoTouch1" />
+    <file src="SQLiteNetExtensions/**/*.cs" target="src" />
+  </files>
+
+</package>

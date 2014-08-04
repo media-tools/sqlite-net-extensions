@@ -28,9 +28,9 @@ namespace SQLiteNetExtensions.Extensions.TextBlob
             return _serializer ?? (_serializer = new JsonBlobSerializer());
         }
 
-        public static void GetTextBlobChild<T>(T element, PropertyInfo relationshipProperty)
+        public static void GetTextBlobChild(object element, PropertyInfo relationshipProperty)
         {
-            var type = typeof(T);
+            var type = element.GetType();
             var relationshipType = relationshipProperty.PropertyType;
 
             Debug.Assert(relationshipType != typeof(string), "TextBlob property is already a string");
@@ -45,7 +45,7 @@ namespace SQLiteNetExtensions.Extensions.TextBlob
             relationshipProperty.SetValue(element, value, null);
         }
 
-        public static void UpdateTextBlobProperty<T>(T element, PropertyInfo relationshipProperty)
+        public static void UpdateTextBlobProperty(object element, PropertyInfo relationshipProperty)
         {
             var type = element.GetType();
             var relationshipType = relationshipProperty.PropertyType;
