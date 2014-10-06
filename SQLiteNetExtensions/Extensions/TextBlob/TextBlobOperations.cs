@@ -36,9 +36,9 @@ namespace SQLiteNetExtensions.Extensions.TextBlob
             Debug.Assert(relationshipType != typeof(string), "TextBlob property is already a string");
 
             var textblobAttribute = relationshipProperty.GetAttribute<TextBlobAttribute>();
-            var textProperty = type.GetProperty(textblobAttribute.TextProperty, typeof (string));
-            Debug.Assert(textProperty != null, "Text property for TextBlob relationship not found");
-
+            var textProperty = type.GetRuntimeProperty(textblobAttribute.TextProperty);
+            Debug.Assert(textProperty != null && textProperty.PropertyType == typeof(string), "Text property for TextBlob relationship not found");
+            
             var textValue = (string)textProperty.GetValue(element, null);
             var value = textValue != null ? GetTextSerializer().Deserialize(textValue, relationshipType) : null;
 
@@ -53,8 +53,8 @@ namespace SQLiteNetExtensions.Extensions.TextBlob
             Debug.Assert(relationshipType != typeof(string), "TextBlob property is already a string");
 
             var textblobAttribute = relationshipProperty.GetAttribute<TextBlobAttribute>();
-            var textProperty = type.GetProperty(textblobAttribute.TextProperty, typeof(string));
-            Debug.Assert(textProperty != null, "Text property for TextBlob relationship not found");
+            var textProperty = type.GetRuntimeProperty(textblobAttribute.TextProperty);
+            Debug.Assert(textProperty != null && textProperty.PropertyType == typeof(string), "Text property for TextBlob relationship not found");
 
             var value = relationshipProperty.GetValue(element, null);
             var textValue = value != null ? GetTextSerializer().Serialize(value) : null;

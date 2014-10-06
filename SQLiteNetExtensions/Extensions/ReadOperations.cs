@@ -126,7 +126,7 @@ namespace SQLiteNetExtensions.Extensions
         /// <typeparam name="T">Entity type where the object should be fetched from</typeparam>
         public static void GetChild<T>(this SQLiteConnection conn, T element, string relationshipProperty, bool recursive = false)
         {
-            conn.GetChild(element, element.GetType().GetProperty(relationshipProperty), recursive);
+            conn.GetChild(element, element.GetType().GetRuntimeProperty(relationshipProperty), recursive);
         }
 
         /// <summary>
