@@ -215,7 +215,7 @@ namespace SQLiteNetExtensions.Extensions
         public static List<PropertyInfo> GetRelationshipProperties(this Type type)
         {
             return (from property in type.GetRuntimeProperties()
-                where property.IsPublicInstance() && property.GetAttribute<PrimaryKeyAttribute>() != null
+                where property.IsPublicInstance() && property.GetAttribute<RelationshipAttribute>() != null
                 select property).ToList();
         } 
 
