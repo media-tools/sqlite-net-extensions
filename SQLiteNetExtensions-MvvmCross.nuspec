@@ -2,7 +2,7 @@
 <package >
   <metadata>
     <id>SQLiteNetExtensions-MvvmCross</id>
-    <version>1.2.0</version>
+    <version>1.2.1</version>
     <title>SQLite.Net Extensions-MvvmCross</title>
     <authors>TwinCoders</authors>
     <owners>TwinCoders</owners>
@@ -20,7 +20,7 @@
   </metadata>
 
   <files>
-    <file src="MvvmCross/SQLiteNetExtensions-MvvmCross/bin/Release/SQLiteNetExtensions-MvvmCross.dll" target="lib/portable-net45+sl5+netcore45+wp8+MonoAndroid1+MonoTouch1" />
+    <file src="MvvmCross/SQLiteNetExtensions-MvvmCross/bin/Release/SQLiteNetExtensions-MvvmCross.dll" target="lib/portable-net45+netcore45+wpa81+wp8+MonoAndroid1+MonoTouch1" />
     <file src="SQLiteNetExtensions/**/*.cs" target="src" />
   </files>
 

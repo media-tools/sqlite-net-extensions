@@ -2,7 +2,7 @@
 <package >
   <metadata>
     <id>SQLiteNetExtensions</id>
-    <version>1.2.0</version>
+    <version>1.2.1</version>
     <title>SQLite.Net Extensions-PCL</title>
     <authors>TwinCoders</authors>
     <owners>TwinCoders</owners>
@@ -20,7 +20,7 @@
   </metadata>
 
   <files>
-    <file src="SQLiteNetExtensions/bin/Release/SQLiteNetExtensions.dll" target="lib/portable-net45+sl5+netcore45+wp8+MonoAndroid1+MonoTouch1" />
+    <file src="SQLiteNetExtensions/bin/Release/SQLiteNetExtensions.dll" target="lib/portable-net45+netcore45+wpa81+wp8+MonoAndroid1+MonoTouch1" />
     <file src="SQLiteNetExtensions/**/*.cs" target="src" />
   </files>
 
