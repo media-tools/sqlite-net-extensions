@@ -249,7 +249,7 @@ namespace SQLiteNetExtensions.Extensions
         {
             return propertyInfo != null &&
                    ((propertyInfo.GetMethod != null && !propertyInfo.GetMethod.IsStatic && propertyInfo.GetMethod.IsPublic) ||
-                   (propertyInfo.SetMethod != null && !propertyInfo.SetMethod.IsStatic && !propertyInfo.SetMethod.IsPublic));
+                   (propertyInfo.SetMethod != null && !propertyInfo.SetMethod.IsStatic && propertyInfo.SetMethod.IsPublic));
         }
     }
 }
