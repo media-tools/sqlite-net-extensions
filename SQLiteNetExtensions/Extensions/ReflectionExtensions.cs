@@ -248,7 +248,7 @@ namespace SQLiteNetExtensions.Extensions
         private static bool IsPublicInstance(this PropertyInfo propertyInfo)
         {
             return propertyInfo != null &&
-                   ((propertyInfo.GetMethod != null && !propertyInfo.GetMethod.IsStatic && propertyInfo.GetMethod.IsPublic) ||
+                   ((propertyInfo.GetMethod != null && !propertyInfo.GetMethod.IsStatic && propertyInfo.GetMethod.IsPublic) &&
                    (propertyInfo.SetMethod != null && !propertyInfo.SetMethod.IsStatic && propertyInfo.SetMethod.IsPublic));
         }
     }
