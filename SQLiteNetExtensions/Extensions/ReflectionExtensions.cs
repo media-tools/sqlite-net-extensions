@@ -5,6 +5,7 @@ using System.Linq;
 using System.Reflection;
 using SQLiteNetExtensions.Attributes;
 using System.Linq.Expressions;
+using System.Collections.ObjectModel;
 
 #if USING_MVVMCROSS
 using Cirrious.MvvmCross.Community.Plugins.Sqlite;
@@ -21,7 +22,8 @@ namespace SQLiteNetExtensions.Extensions
     {
         None,
         Array,
-        List
+        List,
+        ObservableCollection
     }
 
     public class ManyToManyMetaInfo
@@ -59,15 +61,21 @@ namespace SQLiteNetExtensions.Extensions
             var type = property.PropertyType;
             enclosedType = EnclosedType.None;
 
+            var typeInfo = type.GetTypeInfo();
             if (type.IsArray)
             {
                 type = type.GetElementType();
                 enclosedType = EnclosedType.Array;
             }
-            else if (type.GetTypeInfo().IsGenericType && typeof(List<>).GetTypeInfo().IsAssignableFrom(type.GetGenericTypeDefinition().GetTypeInfo()))
+            else if (typeInfo.IsGenericType && typeof(List<>).GetTypeInfo().IsAssignableFrom(type.GetGenericTypeDefinition().GetTypeInfo()))
             {
-                type = type.GetTypeInfo().GenericTypeArguments[0];
+                type = typeInfo.GenericTypeArguments[0];
                 enclosedType = EnclosedType.List;
+            }
+            else if (typeInfo.IsGenericType && typeof(ObservableCollection<>).GetTypeInfo().IsAssignableFrom(type.GetTypeInfo().GetGenericTypeDefinition().GetTypeInfo()))
+            {
+                type = typeInfo.GenericTypeArguments[0];
+                enclosedType = EnclosedType.ObservableCollection;
             }
             return type;
         }

@@ -4,6 +4,7 @@ using System.Linq;
 using NUnit.Framework;
 using SQLiteNetExtensions.Attributes;
 using SQLiteNetExtensions.Extensions;
+using System.Collections.ObjectModel;
 
 #if PCL
 using SQLite.Net;
@@ -110,7 +111,7 @@ namespace SQLiteNetExtensions.IntegrationTests
             public string Name { get; set; }
 
             [ManyToMany(typeof(ClassGClassG), "ChildId", "Children")]
-            public List<M2MClassG> Parents { get; set; }
+            public ObservableCollection<M2MClassG> Parents { get; set; }
 
             [ManyToMany(typeof(ClassGClassG), "ParentId", "Parents")]
             public List<M2MClassG> Children { get; set; }
@@ -142,7 +143,7 @@ namespace SQLiteNetExtensions.IntegrationTests
             public List<M2MClassH> Parents { get; set; }
 
             [ManyToMany(typeof(ClassHClassH), "ParentId", "Parents")]
-            public List<M2MClassH> Children { get; set; }
+            public ObservableCollection<M2MClassH> Children { get; set; }
         }
 
         public class ClassHClassH
@@ -723,19 +724,19 @@ namespace SQLiteNetExtensions.IntegrationTests
             var objects = new List<M2MClassG>{ object1, object2, object3, object4, object5, object6 };
             conn.InsertAll(objects);
 
-            object2.Parents = new List<M2MClassG>{ object1 };
+            object2.Parents = new ObservableCollection<M2MClassG>{ object1 };
             object2.Children = new List<M2MClassG>{ object4, object5 };
             conn.UpdateWithChildren(object2);
 
-            object3.Parents = new List<M2MClassG>{ object1 };
+            object3.Parents = new ObservableCollection<M2MClassG>{ object1 };
             object3.Children = new List<M2MClassG>{ object5, object6 };
             conn.UpdateWithChildren(object3);
 
             // These relationships are discovered on runtime, assign them to check for correctness below
             object1.Children = new List<M2MClassG>{ object2, object3 };
-            object4.Parents = new List<M2MClassG>{ object2 };
-            object5.Parents = new List<M2MClassG>{ object2, object3 };
-            object6.Parents = new List<M2MClassG>{ object3 };
+            object4.Parents = new ObservableCollection<M2MClassG>{ object2 };
+            object5.Parents = new ObservableCollection<M2MClassG>{ object2, object3 };
+            object6.Parents = new ObservableCollection<M2MClassG>{ object3 };
 
             foreach (var expected in objects)
             {
@@ -743,7 +744,7 @@ namespace SQLiteNetExtensions.IntegrationTests
 
                 Assert.AreEqual(expected.Name, obtained.Name);
                 Assert.AreEqual((expected.Children ?? new List<M2MClassG>()).Count, (obtained.Children ?? new List<M2MClassG>()).Count, obtained.Name);
-                Assert.AreEqual((expected.Parents ?? new List<M2MClassG>()).Count, (obtained.Parents ?? new List<M2MClassG>()).Count, obtained.Name);
+                Assert.AreEqual((expected.Parents ?? new ObservableCollection<M2MClassG>()).Count, (obtained.Parents ?? new ObservableCollection<M2MClassG>()).Count, obtained.Name);
 
                 foreach (var child in expected.Children ?? Enumerable.Empty<M2MClassG>())
                     Assert.IsTrue(obtained.Children.Any(c => c.Id == child.Id && c.Name == child.Name), obtained.Name);
@@ -784,13 +785,13 @@ namespace SQLiteNetExtensions.IntegrationTests
             var objects = new List<M2MClassH>{ object1, object2, object3, object4, object5, object6 };
             conn.InsertAll(objects);
 
-            object1.Children = new List<M2MClassH>{ object2, object3 };
+            object1.Children = new ObservableCollection<M2MClassH>{ object2, object3 };
             conn.UpdateWithChildren(object1);
 
-            object2.Children = new List<M2MClassH>{ object4, object5 };
+            object2.Children = new ObservableCollection<M2MClassH>{ object4, object5 };
             conn.UpdateWithChildren(object2);
 
-            object3.Children = new List<M2MClassH>{ object5, object6 };
+            object3.Children = new ObservableCollection<M2MClassH>{ object5, object6 };
             conn.UpdateWithChildren(object3);
 
             // These relationships are discovered on runtime, assign them to check for correctness below
@@ -805,7 +806,7 @@ namespace SQLiteNetExtensions.IntegrationTests
                 var obtained = conn.GetWithChildren<M2MClassH>(expected.Id);
 
                 Assert.AreEqual(expected.Name, obtained.Name);
-                Assert.AreEqual((expected.Children ?? new List<M2MClassH>()).Count, (obtained.Children ?? new List<M2MClassH>()).Count, obtained.Name);
+                Assert.AreEqual((expected.Children ?? new ObservableCollection<M2MClassH>()).Count, (obtained.Children ?? new ObservableCollection<M2MClassH>()).Count, obtained.Name);
                 Assert.AreEqual((expected.Parents ?? new List<M2MClassH>()).Count, (obtained.Parents ?? new List<M2MClassH>()).Count, obtained.Name);
 
                 foreach (var child in expected.Children ?? Enumerable.Empty<M2MClassH>())

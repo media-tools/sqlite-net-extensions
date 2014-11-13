@@ -4,6 +4,9 @@ using System.Linq;
 using NUnit.Framework;
 using SQLiteNetExtensions.Attributes;
 using SQLiteNetExtensions.Extensions;
+using System.Collections.ObjectModel;
+
+
 #if PCL
 using SQLite.Net;
 using SQLite.Net.Attributes;
@@ -48,7 +51,7 @@ namespace SQLiteNetExtensions.IntegrationTests
             public int Id { get; set; }
 
             [OneToMany]
-            public List<O2MClassD> DObjects { get; set; }
+            public ObservableCollection<O2MClassD> DObjects { get; set; }
 
             public string Bar { get; set; }
         }
@@ -94,7 +97,7 @@ namespace SQLiteNetExtensions.IntegrationTests
             public Guid Guid { get; set; }
 
             [OneToMany]
-            public List<O2MClassH> HObjects { get; set; }
+            public ObservableCollection<O2MClassH> HObjects { get; set; }
 
             public string Bar { get; set; }
         }
@@ -560,7 +563,7 @@ namespace SQLiteNetExtensions.IntegrationTests
 
             Assert.Null(objectC.DObjects);
 
-            objectC.DObjects = objectsD;
+            objectC.DObjects = new ObservableCollection<O2MClassD>(objectsD);
 
             foreach (var objectD in objectsD)
             {
@@ -684,7 +687,7 @@ namespace SQLiteNetExtensions.IntegrationTests
 
             Assert.Null(objectG.HObjects);
 
-            objectG.HObjects = objectsH;
+            objectG.HObjects = new ObservableCollection<O2MClassH>(objectsH);
 
             foreach (var objectD in objectsH)
             {
