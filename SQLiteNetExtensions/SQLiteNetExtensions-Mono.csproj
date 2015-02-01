@@ -5,7 +5,7 @@
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <ProductVersion>8.0.30703</ProductVersion>
     <SchemaVersion>2.0</SchemaVersion>
-    <ProjectGuid>{EAF7E19F-DAD2-4767-88EC-C6D6C484BC02}</ProjectGuid>
+    <ProjectGuid>{EAF7E19F-DAD2-4767-88EC-C6D6C484BC05}</ProjectGuid>
     <OutputType>Library</OutputType>
     <RootNamespace>SQLiteNetExtensions</RootNamespace>
     <AssemblyName>SQLiteNetExtensions</AssemblyName>
@@ -61,12 +61,6 @@
     <Compile Include="Attributes\RelationshipAttribute.cs" />
     <Compile Include="Attributes\TextBlobAttribute.cs" />
   </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\..\sqlite-net\src\SQLite.csproj">
-      <Project>{EAF7E19F-DAD2-4767-88EC-C6D6C484BC02}</Project>
-      <Name>SQLite</Name>
-    </ProjectReference>
-  </ItemGroup>
   <ProjectExtensions>
     <MonoDevelop>
       <Properties>
@@ -80,5 +74,11 @@
   </ProjectExtensions>
   <ItemGroup>
     <None Include="packages.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\sqlite-net\src\SQLiteNet-Mono.csproj">
+      <Project>{EAF7E19F-DAD2-4767-88EC-C6D6C484BC03}</Project>
+      <Name>SQLiteNet-Mono</Name>
+    </ProjectReference>
   </ItemGroup>
 </Project>
